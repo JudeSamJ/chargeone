@@ -1,7 +1,7 @@
 
 "use client";
 
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, Polyline, TrafficLayer } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer } from '@react-google-maps/api';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { findStations } from '@/ai/flows/findStations';
 import { useToast } from '@/hooks/use-toast';
@@ -24,22 +24,16 @@ const defaultCenter = {
   lng: 77.2090
 };
 
-// Distance in meters from the route polyline to trigger a re-route
-const REROUTE_THRESHOLD = 500; 
-
 export default function MapView({ 
     onStationsFound, 
     stations, 
     onStationClick, 
-    route, 
+    directionsResponse,
     onLocationUpdate, 
     currentLocation, 
-    isJourneyStarted, 
-    onReRoute,
     mapTypeId,
     showTraffic,
     bookedStationIds,
-    requiredStationIds,
     setRecenterCallback
 }) {
     const { isLoaded, loadError } = useJsApiLoader({
@@ -51,16 +45,15 @@ export default function MapView({
     const { toast } = useToast();
     const mapRef = useRef(null);
     const { theme } = useTheme();
-    const lastRerouteTimeRef = useRef(0);
     const [locationReady, setLocationReady] = useState(false);
     const initialLocationSetRef = useRef(false);
 
     const onMapLoad = useCallback((map) => {
         mapRef.current = map;
         setRecenterCallback(() => () => {
-            if (mapRef.current && currentLocation) {
-                mapRef.current.panTo(currentLocation);
-                mapRef.current.setZoom(14);
+            if (mapRef.current) {
+                mapRef.current.panTo(currentLocation || defaultCenter);
+                mapRef.current.setZoom(12);
             }
         });
     }, [currentLocation, setRecenterCallback]);
@@ -83,9 +76,7 @@ export default function MapView({
             if (!locationReady) {
                 onLocationUpdate(defaultCenter); // Set default location on error
                 setLocationReady(true);
-                if (!route) {
-                    fetchStations(defaultCenter.lat, defaultCenter.lng, 10000);
-                }
+                fetchStations(defaultCenter.lat, defaultCenter.lng, 10000);
             }
         };
     
@@ -105,9 +96,7 @@ export default function MapView({
                     if (!initialLocationSetRef.current && mapRef.current) {
                         mapRef.current.panTo(currentPos);
                         mapRef.current.setZoom(14);
-                        if (!route) {
-                            fetchStations(currentPos.lat, currentPos.lng, 10000);
-                        }
+                        fetchStations(currentPos.lat, currentPos.lng, 10000);
                         initialLocationSetRef.current = true;
                     }
                 },
@@ -120,80 +109,10 @@ export default function MapView({
         const intervalId = setInterval(updatePosition, 5000); // Update every 5 seconds
     
         return () => clearInterval(intervalId);
-    }, [isLoaded, onLocationUpdate, route, fetchStations, toast, locationReady]);
-
-    useEffect(() => {
-        if (isJourneyStarted && mapRef.current && currentLocation) {
-            mapRef.current.panTo(currentLocation);
-            mapRef.current.setZoom(16);
-        }
-    }, [isJourneyStarted, currentLocation]);
-
-
-    const decodedPath = useMemo(() => {
-      if (route && isLoaded && route.routes[0]?.overview_polyline?.points) {
-          return window.google.maps.geometry.encoding.decodePath(route.routes[0].overview_polyline.points);
-      }
-      return [];
-    }, [route, isLoaded]);
-
-    // Rerouting logic effect
-    useEffect(() => {
-        if (isJourneyStarted && route && currentLocation && decodedPath.length > 0 && isLoaded) {
-            const now = Date.now();
-            if (now - lastRerouteTimeRef.current > 10000) { // Throttle rerouting checks
-                const userLatLng = new window.google.maps.LatLng(currentLocation.lat, currentLocation.lng);
-                
-                if (window.google.maps.geometry.poly.isLocationOnEdge(userLatLng, new window.google.maps.Polyline({ path: decodedPath }), REROUTE_THRESHOLD / 1000) === false) {
-                     const distanceToRoute = decodedPath.reduce((minDist, point) => {
-                         const dist = window.google.maps.geometry.spherical.computeDistanceBetween(userLatLng, point);
-                         return Math.min(minDist, dist);
-                     }, Infinity);
-
-                     if (distanceToRoute > REROUTE_THRESHOLD) {
-                        lastRerouteTimeRef.current = now;
-                        toast({ title: "Off Route", description: "Recalculating..." });
-                        const destination = route.routes[0].legs[0].end_address;
-                        if (destination) {
-                            onReRoute(`${currentLocation.lat},${currentLocation.lng}`, destination);
-                        }
-                     }
-                }
-            }
-        }
-    }, [isJourneyStarted, route, currentLocation, decodedPath, onReRoute, toast, isLoaded]);
-
-
-    useEffect(() => {
-        if (route && mapRef.current && isLoaded) {
-            const bounds = new window.google.maps.LatLngBounds();
-            
-            const routeBounds = route.routes[0]?.bounds;
-            if (routeBounds) {
-                const ne = routeBounds.northeast;
-                const sw = routeBounds.southwest;
-                bounds.extend(new window.google.maps.LatLng(ne.lat, ne.lng));
-                bounds.extend(new window.google.maps.LatLng(sw.lat, sw.lng));
-            }
-            if (!bounds.isEmpty()) {
-              mapRef.current.fitBounds(bounds);
-            }
-        }
-    }, [route, isLoaded]);
+    }, [isLoaded, onLocationUpdate, fetchStations, toast, locationReady]);
 
     const getStationMarkerIcon = (station) => {
         if (!isLoaded) return null;
-
-        if (requiredStationIds.includes(station.id)) {
-            return {
-                path: window.google.maps.SymbolPath.CIRCLE,
-                fillColor: '#3b82f6', // A bright blue for required stations
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWeight: 2,
-                scale: 9, // Make it slightly larger to stand out
-            };
-        }
 
         if (bookedStationIds.includes(station.id)) {
             return {
@@ -223,49 +142,7 @@ export default function MapView({
             scale: 7,
         };
     };
-
-    const getOriginMarkerIcon = () => {
-        if (!isLoaded || !route) return null;
-
-        const routeLeg = route.routes[0]?.legs[0];
-        if (!routeLeg?.start_location) return null;
-
-        return {
-            position: routeLeg.start_location,
-            icon: {
-                path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5-2.5-1.12 2.5-2.5-2.5z', // Pin icon
-                fillColor: '#4CAF50', // A shade of green for start
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWeight: 1.5,
-                scale: 2,
-                anchor: new window.google.maps.Point(12, 24),
-            }
-        };
-    };
     
-    const getDestinationMarkerIcon = () => {
-      if (!isLoaded || !route) return null;
-      
-      const routeLeg = route.routes[0]?.legs[0];
-      if (!routeLeg?.end_location) return null;
-
-      return {
-          position: routeLeg.end_location,
-          icon: {
-            path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5-2.5-1.12 2.5-2.5-2.5z',
-            fillColor: '#EA4335',
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 1.5,
-            scale: 2,
-            anchor: new window.google.maps.Point(12, 24),
-        }
-      }
-    };
-    
-    const originMarker = getOriginMarkerIcon();
-    const destinationMarker = getDestinationMarkerIcon();
     const mapThemeStyles = theme === 'dark' ? mapStylesDark : mapStylesLight;
 
 
@@ -292,7 +169,7 @@ export default function MapView({
         >
             {isLoaded && (
               <>
-                {currentLocation && (
+                {currentLocation && !directionsResponse && (
                   <MarkerF
                       position={currentLocation}
                       title="Your Location"
@@ -316,7 +193,6 @@ export default function MapView({
                         onClick={() => onStationClick(station)}
                         onMouseOver={() => setActiveMarker({ position: { lat: station.lat, lng: station.lng }, content: station })}
                         icon={getStationMarkerIcon(station)}
-                        zIndex={requiredStationIds.includes(station.id) ? 2 : 1}
                     />
                 ))}
 
@@ -360,33 +236,8 @@ export default function MapView({
                     </InfoWindowF>
                 )}
                 
-                {decodedPath.length > 0 && (
-                    <Polyline
-                        path={decodedPath}
-                        options={{
-                          strokeColor: '#1976D2',
-                          strokeWeight: 6,
-                          strokeOpacity: 0.8,
-                        }}
-                    />
-                )}
-                
-                {originMarker && (
-                    <MarkerF
-                        position={originMarker.position}
-                        title="Origin"
-                        onMouseOver={() => setActiveMarker({ position: originMarker.position, content: { title: 'Origin' } })}
-                        icon={originMarker.icon}
-                    />
-                )}
-
-                {destinationMarker && (
-                    <MarkerF
-                        position={destinationMarker.position}
-                        title="Destination"
-                        onMouseOver={() => setActiveMarker({ position: destinationMarker.position, content: { title: 'Destination' } })}
-                        icon={destinationMarker.icon}
-                    />
+                {directionsResponse && (
+                  <DirectionsRenderer directions={directionsResponse} />
                 )}
 
                 {showTraffic && <TrafficLayer autoUpdate />}

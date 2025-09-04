@@ -9,41 +9,38 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { planRoute } from '@/ai/flows/planRoute';
 import { findStations } from '@/ai/flows/findStations';
 import Controls from '@/components/charge-one/Controls';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarContent, SidebarRail } from '@/components/ui/sidebar';
 import Header from '@/components/charge-one/Header';
-import { formatDuration, formatDistance } from './utils';
-import { add, differenceInMinutes } from 'date-fns';
 import { createBooking, getUserBookings, cancelBooking } from '@/lib/firestore';
+import { differenceInMinutes } from 'date-fns';
 
 function HomePageContent() {
   const [stations, setStations] = useState([]);
-  const [requiredStations, setRequiredStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [userBookings, setUserBookings] = useState([]);
   const [userVehicle, setUserVehicle] = useState(null);
-  const [route, setRoute] = useState(null);
-  const [isPlanningRoute, setIsPlanningRoute] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
-  const [isJourneyStarted, setIsJourneyStarted] = useState(false);
-  const [liveJourneyData, setLiveJourneyData] = useState(null);
-  const journeyIntervalRef = useRef(null);
-  const [initialTripData, setInitialTripData] = useState(null);
   const [mapTypeId, setMapTypeId] = useState('roadmap');
   const [showTraffic, setShowTraffic] = useState(false);
   const [recenterMap, setRecenterMap] = useState(() => () => {});
   
+  const [directionsResponse, setDirectionsResponse] = useState(null);
+  const [distance, setDistance] = useState('');
+  const [duration, setDuration] = useState('');
 
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isGuest = searchParams.get('guest') === 'true';
+  
+  const originRef = useRef();
+  const destinationRef = useRef();
 
   const fetchUserBookings = useCallback(async (uid) => {
     try {
@@ -79,37 +76,6 @@ function HomePageContent() {
     }
   }, [user, fetchUserBookings]);
 
-  useEffect(() => {
-    if (isJourneyStarted && initialTripData) {
-        const startTime = Date.now();
-        
-        const updateJourneyData = () => {
-            const elapsedTimeSeconds = (Date.now() - startTime) / 1000;
-            const remainingDurationSeconds = Math.max(0, initialTripData.duration - elapsedTimeSeconds);
-            const arrivalTime = new Date(Date.now() + remainingDurationSeconds * 1000);
-            
-            setLiveJourneyData(prev => prev ? ({
-                ...prev,
-                duration: formatDuration(remainingDurationSeconds),
-                estimatedArrivalTime: arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            }) : prev);
-        };
-        
-        updateJourneyData(); // Initial update
-        journeyIntervalRef.current = setInterval(updateJourneyData, 30000); // Update every 30 seconds
-
-    } else if (journeyIntervalRef.current) {
-        clearInterval(journeyIntervalRef.current);
-        journeyIntervalRef.current = null;
-    }
-
-    return () => {
-        if (journeyIntervalRef.current) {
-            clearInterval(journeyIntervalRef.current);
-        }
-    };
-}, [isJourneyStarted, initialTripData]);
-
   
   const handleStationSelect = (station) => {
     setSelectedStation(station);
@@ -129,117 +95,31 @@ function HomePageContent() {
     });
   }
   
-  const handleRouteUpdate = (result) => {
-    if (!result) {
-        setRoute(null);
-        setRequiredStations([]);
-        setInitialTripData(null);
-        setLiveJourneyData(null);
-        setIsJourneyStarted(false); // Make sure journey is ended
-        
-        // When clearing the route, fetch stations around the current location.
-        if (currentLocation) {
-            findStations({ latitude: currentLocation.lat, longitude: currentLocation.lng, radius: 10000 })
-                .then(setStations)
-                .catch(err => {
-                    console.error("Error finding stations after clearing route:", err);
-                    toast({ variant: 'destructive', title: 'Could not find nearby stations.'});
-                    setStations([]);
-                });
-        } else {
-            // If no location, clear stations list
-            setStations([]);
-        }
-        return;
+  async function calculateRoute() {
+    if (originRef.current.value === '' || destinationRef.current.value === '') {
+      return;
     }
-
-    setRoute(result.route);
-    setRequiredStations(result.requiredChargingStations);
-
-    // Combine required stations and all other nearby stations, removing duplicates
-    const allStations = [...result.requiredChargingStations];
-    const uniqueStationIds = new Set();
-    const uniqueStations = allStations.filter(station => {
-        if (!uniqueStationIds.has(station.id)) {
-            uniqueStationIds.add(station.id);
-            return true;
-        }
-        return false;
+    // eslint-disable-next-line no-undef
+    const directionsService = new google.maps.DirectionsService();
+    const results = await directionsService.route({
+      origin: originRef.current.value,
+      destination: destinationRef.current.value,
+      // eslint-disable-next-line no-undef
+      travelMode: google.maps.TravelMode.DRIVING,
     });
-    setStations(uniqueStations);
-    
-    setInitialTripData({ distance: result.totalDistance, duration: result.totalDuration });
-    
-    const leg = result.route.routes[0]?.legs[0];
-    if (leg) {
-        const arrivalTime = add(new Date(), {seconds: result.totalDuration});
-        setLiveJourneyData({
-            distance: formatDistance(result.totalDistance),
-            duration: formatDuration(result.totalDuration),
-            endAddress: leg.end_address || 'Destination',
-            estimatedArrivalTime: arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        });
-    } else {
-        setLiveJourneyData(null);
-    }
+    setDirectionsResponse(results);
+    setDistance(results.routes[0].legs[0].distance.text);
+    setDuration(results.routes[0].legs[0].duration.text);
   }
 
-  const handlePlanRoute = async (origin, destination) => {
-    if (!userVehicle) {
-        toast({ variant: 'destructive', title: 'Please select a vehicle first.' });
-        return;
-    }
-    setIsPlanningRoute(true);
-    handleRouteUpdate(null);
-    setSelectedStation(null);
-
-    try {
-        const result = await planRoute({
-            origin,
-            destination,
-            vehicle: userVehicle
-        });
-        handleRouteUpdate(result);
-    } catch (error) {
-        console.error("Failed to plan route:", error);
-        toast({ variant: 'destructive', title: 'Failed to plan route.' });
-    } finally {
-        setIsPlanningRoute(false);
-    }
-  };
-
-  const handleClearRoute = () => {
-    setRoute(null);
-    setRequiredStations([]);
-    setInitialTripData(null);
-    setLiveJourneyData(null);
-    setIsJourneyStarted(false);
-    
-    if (currentLocation) {
-        findStations({ latitude: currentLocation.lat, longitude: currentLocation.lng, radius: 10000 })
-            .then(setStations)
-            .catch(err => {
-                console.error("Error finding stations after clearing route:", err);
-                toast({ variant: 'destructive', title: 'Could not find nearby stations.'});
-                setStations([]);
-            });
-    } else {
-        setStations([]);
-    }
-  };
+  function clearRoute() {
+    setDirectionsResponse(null);
+    setDistance('');
+    setDuration('');
+    if (originRef.current) originRef.current.value = '';
+    if (destinationRef.current) destinationRef.current.value = '';
+  }
   
-  const handleStartJourney = () => {
-    if (route && liveJourneyData) {
-        setIsJourneyStarted(true);
-        // When journey starts, only show the required stations on the map.
-        setStations(requiredStations);
-        toast({
-            title: "Journey Started!",
-            description: "Live tracking is now active. The map will follow your location.",
-        });
-    }
-  }
-
   const handleBookingConfirm = async (date, time) => {
     if (!user || !selectedStation) {
       toast({ variant: "destructive", title: "Cannot create booking", description: "You must be signed in and select a station." });
@@ -304,11 +184,8 @@ function HomePageContent() {
   };
 
   const handleStationsFound = useCallback((foundStations) => {
-    // Only update stations if a route is not active
-    if (!route) {
-        setStations(foundStations);
-    }
-  }, [route]);
+    setStations(foundStations);
+  }, []);
 
   if (loading || (!user && !isGuest) || !userVehicle) {
     return (
@@ -336,16 +213,12 @@ function HomePageContent() {
                   selectedStation={selectedStation}
                   handleEndSession={handleEndSession}
                   handleStationSelect={handleStationSelect}
-                  handlePlanRoute={handlePlanRoute}
-                  isPlanningRoute={isPlanningRoute}
+                  onPlanRoute={calculateRoute}
                   isRechargeOpen={isRechargeOpen}
                   handleRecharge={handleRecharge}
                   currentLocation={currentLocation}
-                  hasRoute={!!route}
-                  onClearRoute={handleClearRoute}
-                  isJourneyStarted={isJourneyStarted}
-                  onStartJourney={handleStartJourney}
-                  liveJourneyData={liveJourneyData}
+                  hasRoute={!!directionsResponse}
+                  onClearRoute={clearRoute}
                   isBookingOpen={isBookingOpen}
                   setIsBookingOpen={setIsBookingOpen}
                   onBookingConfirm={handleBookingConfirm}
@@ -353,6 +226,10 @@ function HomePageContent() {
                   userBookings={userBookings}
                   onCancelBooking={handleCancelBooking}
                   activeBookingForSelectedStation={activeBookingForSelectedStation}
+                  originRef={originRef}
+                  destinationRef={destinationRef}
+                  distance={distance}
+                  duration={duration}
               />
           </SidebarContent>
         </Sidebar>
@@ -368,15 +245,12 @@ function HomePageContent() {
                 onStationsFound={handleStationsFound} 
                 stations={stations}
                 onStationClick={handleStationSelect}
-                route={route}
+                directionsResponse={directionsResponse}
                 onLocationUpdate={setCurrentLocation}
                 currentLocation={currentLocation}
-                isJourneyStarted={isJourneyStarted}
-                onReRoute={handlePlanRoute}
                 mapTypeId={mapTypeId}
                 showTraffic={showTraffic}
                 bookedStationIds={bookedStationIds}
-                requiredStationIds={requiredStations.map(s => s.id)}
                 setRecenterCallback={setRecenterMap}
             />
         </SidebarInset>
