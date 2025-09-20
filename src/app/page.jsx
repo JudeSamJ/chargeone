@@ -29,7 +29,7 @@ function HomePageContent() {
   const [userVehicle, setUserVehicle] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [mapTypeId, setMapTypeId] = useState('roadmap');
-  const [showTraffic, setShowTraffic] = useState(false);
+  const [showTraffic, setShowTraffic] = useState(true);
   const [recenterMap, setRecenterMap] = useState(() => () => {});
   
   const [directionsResponse, setDirectionsResponse] = useState(null);
@@ -136,12 +136,12 @@ function HomePageContent() {
     }
   }
 
-  function clearRoute() {
+  const clearRoute = useCallback(() => {
     setRoute(null);
     setDirectionsResponse(null);
-    if (originRef.current) originRef.current.value = '';
+    // Keep origin as is, but clear destination
     if (destinationRef.current) destinationRef.current.value = '';
-  }
+  }, []);
   
   const handleBookingConfirm = async (date, time) => {
     if (!user || !selectedStation) {

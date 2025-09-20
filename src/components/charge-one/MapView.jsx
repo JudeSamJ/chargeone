@@ -1,7 +1,7 @@
 
 "use client";
 
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer, Polyline, TrafficLayer } from '@react-google-maps/api';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { findStations } from '@/ai/flows/findStations';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +9,7 @@ import { useTheme } from 'next-themes';
 import { mapStylesLight } from '@/lib/map-styles-light';
 import { mapStylesDark } from '@/lib/map-styles-dark';
 import { Badge } from '../ui/badge';
-import { Zap, Plug, CircleDotDashed, CalendarCheck } from 'lucide-react';
+import { Zap, Plug, CircleDotDashed, CalendarCheck, NavigationArrow } from 'lucide-react';
 
 const mapContainerStyle = {
   position: 'absolute',
@@ -49,13 +49,18 @@ export default function MapView({
     const [locationReady, setLocationReady] = useState(false);
     const initialLocationSetRef = useRef(false);
     const [decodedPath, setDecodedPath] = useState([]);
+    const isNavigating = !!directionsResponse;
 
     useEffect(() => {
+        if (!route) {
+          setDecodedPath([]);
+          return;
+        }
         if (isLoaded && route?.route.routes[0]?.overview_polyline?.points) {
           const path = window.google.maps.geometry.encoding.decodePath(route.route.routes[0].overview_polyline.points);
           setDecodedPath(path);
         } else {
-          setDecodedPath([]); // Clear path when route is cleared
+          setDecodedPath([]);
         }
       }, [route, isLoaded]);
 
@@ -64,10 +69,13 @@ export default function MapView({
         setRecenterCallback(() => () => {
             if (mapRef.current) {
                 mapRef.current.panTo(currentLocation || defaultCenter);
-                mapRef.current.setZoom(12);
+                mapRef.current.setZoom(isNavigating ? 18 : 12);
+                if (isNavigating) {
+                    map.setTilt(45);
+                }
             }
         });
-    }, [currentLocation, setRecenterCallback]);
+    }, [currentLocation, setRecenterCallback, isNavigating]);
 
     const fetchStations = useCallback((lat, lng, radius) => {
         findStations({ latitude: lat, longitude: lng, radius })
@@ -85,42 +93,57 @@ export default function MapView({
             console.error("Geolocation error:", error.message);
             toast({ title: "Could not get your location. Showing default." });
             if (!locationReady) {
-                onLocationUpdate(defaultCenter); // Set default location on error
+                onLocationUpdate({...defaultCenter, heading: 0});
                 setLocationReady(true);
                 fetchStations(defaultCenter.lat, defaultCenter.lng, 10000);
             }
         };
     
-        const updatePosition = () => {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const currentPos = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    };
-                    onLocationUpdate(currentPos);
-                    
-                    if (!locationReady) {
-                        setLocationReady(true);
-                    }
-    
-                    if (!initialLocationSetRef.current && mapRef.current) {
+        const watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const currentPos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    heading: position.coords.heading || 0,
+                };
+                onLocationUpdate(currentPos);
+                
+                if (!locationReady) {
+                    setLocationReady(true);
+                }
+
+                if (mapRef.current) {
+                    if (!initialLocationSetRef.current) {
                         mapRef.current.panTo(currentPos);
                         mapRef.current.setZoom(14);
                         fetchStations(currentPos.lat, currentPos.lng, 10000);
                         initialLocationSetRef.current = true;
                     }
-                },
-                handleLocationError,
-                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-            );
-        };
-        
-        updatePosition(); // Get initial position
-        const intervalId = setInterval(updatePosition, 5000); // Update every 5 seconds
+                    if (isNavigating) {
+                        mapRef.current.panTo(currentPos);
+                        mapRef.current.setHeading(position.coords.heading || 0);
+                        mapRef.current.setTilt(45);
+                        mapRef.current.setZoom(18);
+                    }
+                }
+            },
+            handleLocationError,
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        );
     
-        return () => clearInterval(intervalId);
-    }, [isLoaded, onLocationUpdate, fetchStations, toast, locationReady]);
+        return () => navigator.geolocation.clearWatch(watchId);
+    }, [isLoaded, onLocationUpdate, fetchStations, toast, locationReady, isNavigating]);
+
+    // Reset map view when navigation ends
+    useEffect(() => {
+        if (!isNavigating && mapRef.current) {
+            mapRef.current.setTilt(0); // Reset tilt to 2D view
+            if (currentLocation) {
+                mapRef.current.setZoom(14); // Reset zoom level
+            }
+        }
+    }, [isNavigating, currentLocation]);
+
 
     const getStationMarkerIcon = (station) => {
         if (!isLoaded) return null;
@@ -162,6 +185,22 @@ export default function MapView({
     
     const activeStation = activeMarker && 'name' in activeMarker.content ? activeMarker.content : null;
     const activeTitle = activeMarker && 'title' in activeMarker.content ? activeMarker.content.title : null;
+    
+    const navigationArrowIcon = useMemo(() => {
+        if (!isLoaded) return null;
+        return {
+          path: "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z", // Navigation arrow SVG path
+          fillColor: '#4285F4',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+          rotation: currentLocation?.heading || 0,
+          scale: 1.5,
+          anchor: new window.google.maps.Point(12, 12)
+        };
+    }, [isLoaded, currentLocation?.heading]);
+
+    const routeLeg = directionsResponse?.routes[0]?.legs[0];
 
     return (
         <GoogleMap
@@ -180,12 +219,12 @@ export default function MapView({
         >
             {isLoaded && (
               <>
-                {currentLocation && !directionsResponse && (
+                {currentLocation && (
                   <MarkerF
                       position={currentLocation}
                       title="Your Location"
-                      onMouseOver={() => setActiveMarker({ position: currentLocation, content: { title: 'Your Location' } })}
-                      icon={{
+                      onMouseOver={() => !isNavigating && setActiveMarker({ position: currentLocation, content: { title: 'Your Location' } })}
+                      icon={ isNavigating ? navigationArrowIcon : {
                           path: window.google.maps.SymbolPath.CIRCLE,
                           fillColor: '#4285F4',
                           fillOpacity: 1,
@@ -251,11 +290,26 @@ export default function MapView({
                   <Polyline
                     path={decodedPath}
                     options={{
-                      strokeColor: '#4285F4',
+                      strokeColor: theme === 'dark' ? '#5891F5' : '#4285F4',
                       strokeOpacity: 0.8,
                       strokeWeight: 6,
                     }}
                   />
+                )}
+
+                {routeLeg && (
+                  <>
+                    <MarkerF
+                      position={routeLeg.start_location}
+                      label={{ text: 'A', color: 'white' }}
+                      title={`Origin: ${routeLeg.start_address}`}
+                    />
+                     <MarkerF
+                      position={routeLeg.end_location}
+                      label={{ text: 'B', color: 'white' }}
+                      title={`Destination: ${routeLeg.end_address}`}
+                    />
+                  </>
                 )}
 
                 {showTraffic && <TrafficLayer autoUpdate />}
