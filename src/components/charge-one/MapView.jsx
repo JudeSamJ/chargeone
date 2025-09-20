@@ -1,7 +1,7 @@
 
 "use client";
 
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer, Polyline, TrafficLayer } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, Polyline, TrafficLayer } from '@react-google-maps/api';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { findStations } from '@/ai/flows/findStations';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +9,7 @@ import { useTheme } from 'next-themes';
 import { mapStylesLight } from '@/lib/map-styles-light';
 import { mapStylesDark } from '@/lib/map-styles-dark';
 import { Badge } from '../ui/badge';
-import { Zap, Plug, CircleDotDashed, CalendarCheck, NavigationArrow } from 'lucide-react';
+import { Zap, Plug, CircleDotDashed, CalendarCheck } from 'lucide-react';
 
 const mapContainerStyle = {
   position: 'absolute',
@@ -43,9 +43,9 @@ export default function MapView({
     });
     
     const [activeMarker, setActiveMarker] = useState(null);
-    const { toast } = useToast();
     const mapRef = useRef(null);
     const { theme } = useTheme();
+    const { toast } = useToast();
     const [locationReady, setLocationReady] = useState(false);
     const initialLocationSetRef = useRef(false);
     const [decodedPath, setDecodedPath] = useState([]);
@@ -66,19 +66,6 @@ export default function MapView({
           anchor: new window.google.maps.Point(12, 12)
         };
     }, [isLoaded, currentLocation?.heading]);
-
-    useEffect(() => {
-        if (!route) {
-          setDecodedPath([]);
-          return;
-        }
-        if (isLoaded && route?.route.routes[0]?.overview_polyline?.points) {
-          const path = window.google.maps.geometry.encoding.decodePath(route.route.routes[0].overview_polyline.points);
-          setDecodedPath(path);
-        } else {
-          setDecodedPath([]);
-        }
-      }, [route, isLoaded]);
 
     const onMapLoad = useCallback((map) => {
         mapRef.current = map;
@@ -101,6 +88,16 @@ export default function MapView({
                 toast({ variant: 'destructive', title: 'Could not find nearby stations.'});
             });
     }, [onStationsFound, toast]);
+    
+    useEffect(() => {
+      if (isLoaded && route?.route?.routes[0]?.overview_polyline?.points) {
+        const path = window.google.maps.geometry.encoding.decodePath(route.route.routes[0].overview_polyline.points);
+        setDecodedPath(path);
+      } else {
+        // This is the crucial part: ensure the path is cleared when route is null
+        setDecodedPath([]);
+      }
+    }, [route, isLoaded]);
 
     useEffect(() => {
         if (!isLoaded) return;

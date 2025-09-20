@@ -139,7 +139,6 @@ function HomePageContent() {
   const clearRoute = useCallback(() => {
     setRoute(null);
     setDirectionsResponse(null);
-    // Keep origin as is, but clear destination
     if (destinationRef.current) destinationRef.current.value = '';
   }, []);
   
