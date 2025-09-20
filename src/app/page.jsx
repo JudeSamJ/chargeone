@@ -79,6 +79,12 @@ function HomePageContent() {
     }
   }, [user, fetchUserBookings]);
 
+  useEffect(() => {
+    if (currentLocation && originRef.current && !originRef.current.value) {
+      originRef.current.value = `${currentLocation.lat}, ${currentLocation.lng}`;
+    }
+  }, [currentLocation]);
+
   
   const handleStationSelect = (station) => {
     setSelectedStation(station);
@@ -172,7 +178,7 @@ function HomePageContent() {
   const handleCancelBooking = async (booking) => {
     if (!user) return;
   
-    const minutesToBooking = differenceInMinutes(booking.bookingTime, new Date());
+    const minutesToBooking = differenceInMinutes(booking.bookingTime.toDate(), new Date());
   
     if (minutesToBooking < 15) {
       toast({
