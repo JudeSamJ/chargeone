@@ -9,12 +9,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { findStations } from '@/ai/flows/findStations';
+import { planRoute } from '@/ai/flows/planRoute';
 import Controls from '@/components/charge-one/Controls';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarContent, SidebarRail } from '@/components/ui/sidebar';
 import Header from '@/components/charge-one/Header';
 import { createBooking, getUserBookings, cancelBooking } from '@/lib/firestore';
 import { differenceInMinutes } from 'date-fns';
+import { formatDistance, formatDuration } from './utils';
+import LiveNavigationCard from '@/components/charge-one/LiveNavigationCard';
+
 
 function HomePageContent() {
   const [stations, setStations] = useState([]);
@@ -30,8 +33,8 @@ function HomePageContent() {
   const [recenterMap, setRecenterMap] = useState(() => () => {});
   
   const [directionsResponse, setDirectionsResponse] = useState(null);
-  const [distance, setDistance] = useState('');
-  const [duration, setDuration] = useState('');
+  const [route, setRoute] = useState(null);
+  const [loadingRoute, setLoadingRoute] = useState(false);
 
   const { toast } = useToast();
   const { user, loading } = useAuth();
@@ -96,26 +99,40 @@ function HomePageContent() {
   }
   
   async function calculateRoute() {
-    if (originRef.current.value === '' || destinationRef.current.value === '') {
+    if (!originRef.current?.value || !destinationRef.current?.value || !userVehicle) {
+      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide an origin, destination, and vehicle.' });
       return;
     }
-    // eslint-disable-next-line no-undef
-    const directionsService = new google.maps.DirectionsService();
-    const results = await directionsService.route({
-      origin: originRef.current.value,
-      destination: destinationRef.current.value,
-      // eslint-disable-next-line no-undef
-      travelMode: google.maps.TravelMode.DRIVING,
-    });
-    setDirectionsResponse(results);
-    setDistance(results.routes[0].legs[0].distance.text);
-    setDuration(results.routes[0].legs[0].duration.text);
+    
+    setLoadingRoute(true);
+    try {
+      const result = await planRoute({
+        origin: originRef.current.value,
+        destination: destinationRef.current.value,
+        vehicle: userVehicle,
+      });
+
+      setRoute(result);
+      setDirectionsResponse(result.route);
+      setStations(prevStations => {
+        const existingStationIds = new Set(prevStations.map(s => s.id));
+        const newStations = result.requiredChargingStations.filter(s => !existingStationIds.has(s.id));
+        return [...prevStations, ...newStations];
+      });
+      
+    } catch (error) {
+      console.error("Error planning route:", error);
+      toast({ variant: 'destructive', title: 'Route Planning Failed', description: 'Could not calculate a route. Please try again.' });
+      setRoute(null);
+      setDirectionsResponse(null);
+    } finally {
+      setLoadingRoute(false);
+    }
   }
 
   function clearRoute() {
+    setRoute(null);
     setDirectionsResponse(null);
-    setDistance('');
-    setDuration('');
     if (originRef.current) originRef.current.value = '';
     if (destinationRef.current) destinationRef.current.value = '';
   }
@@ -200,6 +217,13 @@ function HomePageContent() {
   
   const activeBookingForSelectedStation = selectedStation ? userBookings.find(b => b.stationId === selectedStation.id) : null;
   const bookedStationIds = userBookings.map(b => b.stationId);
+  const hasActiveRoute = !!route && !!directionsResponse;
+  
+  const navigationData = hasActiveRoute ? {
+    distance: formatDistance(route.totalDistance),
+    duration: formatDuration(route.totalDuration),
+    endAddress: directionsResponse.routes[0].legs[0].end_address,
+  } : null;
 
   return (
       <SidebarProvider>
@@ -214,10 +238,11 @@ function HomePageContent() {
                   handleEndSession={handleEndSession}
                   handleStationSelect={handleStationSelect}
                   onPlanRoute={calculateRoute}
+                  loadingRoute={loadingRoute}
                   isRechargeOpen={isRechargeOpen}
                   handleRecharge={handleRecharge}
                   currentLocation={currentLocation}
-                  hasRoute={!!directionsResponse}
+                  hasRoute={hasActiveRoute}
                   onClearRoute={clearRoute}
                   isBookingOpen={isBookingOpen}
                   setIsBookingOpen={setIsBookingOpen}
@@ -228,8 +253,7 @@ function HomePageContent() {
                   activeBookingForSelectedStation={activeBookingForSelectedStation}
                   originRef={originRef}
                   destinationRef={destinationRef}
-                  distance={distance}
-                  duration={duration}
+                  navigationCard={navigationData ? <LiveNavigationCard data={navigationData} onClearRoute={clearRoute} /> : null}
               />
           </SidebarContent>
         </Sidebar>
@@ -246,6 +270,7 @@ function HomePageContent() {
                 stations={stations}
                 onStationClick={handleStationSelect}
                 directionsResponse={directionsResponse}
+                route={route}
                 onLocationUpdate={setCurrentLocation}
                 currentLocation={currentLocation}
                 mapTypeId={mapTypeId}

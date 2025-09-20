@@ -1,7 +1,7 @@
 
 "use client";
 
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { findStations } from '@/ai/flows/findStations';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +29,7 @@ export default function MapView({
     stations, 
     onStationClick, 
     directionsResponse,
+    route,
     onLocationUpdate, 
     currentLocation, 
     mapTypeId,
@@ -47,6 +48,16 @@ export default function MapView({
     const { theme } = useTheme();
     const [locationReady, setLocationReady] = useState(false);
     const initialLocationSetRef = useRef(false);
+    const [decodedPath, setDecodedPath] = useState([]);
+
+    useEffect(() => {
+        if (isLoaded && route?.route.routes[0]?.overview_polyline?.points) {
+          const path = window.google.maps.geometry.encoding.decodePath(route.route.routes[0].overview_polyline.points);
+          setDecodedPath(path);
+        } else {
+          setDecodedPath([]); // Clear path when route is cleared
+        }
+      }, [route, isLoaded]);
 
     const onMapLoad = useCallback((map) => {
         mapRef.current = map;
@@ -236,8 +247,15 @@ export default function MapView({
                     </InfoWindowF>
                 )}
                 
-                {directionsResponse && (
-                  <DirectionsRenderer directions={directionsResponse} />
+                {decodedPath.length > 0 && (
+                  <Polyline
+                    path={decodedPath}
+                    options={{
+                      strokeColor: '#4285F4',
+                      strokeOpacity: 0.8,
+                      strokeWeight: 6,
+                    }}
+                  />
                 )}
 
                 {showTraffic && <TrafficLayer autoUpdate />}

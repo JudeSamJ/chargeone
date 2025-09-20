@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Map, Route } from 'lucide-react';
+import { Map, Loader } from 'lucide-react';
 
-export default function RoutePlanner({ onPlanRoute, originRef, destinationRef }) {
+export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, loading }) {
   
   return (
     <Card>
@@ -27,6 +27,7 @@ export default function RoutePlanner({ onPlanRoute, originRef, destinationRef })
               id="origin" 
               placeholder="e.g., Delhi" 
               ref={originRef}
+              disabled={loading}
           />
         </div>
         <div className="space-y-2">
@@ -35,13 +36,14 @@ export default function RoutePlanner({ onPlanRoute, originRef, destinationRef })
             id="destination" 
             placeholder="e.g., Agra" 
             ref={destinationRef}
+            disabled={loading}
           />
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={onPlanRoute}>
-            <Map className="mr-2" />
-            Calculate Route
+        <Button className="w-full" onClick={onPlanRoute} disabled={loading}>
+            {loading ? <Loader className="mr-2 animate-spin" /> : <Map className="mr-2" />}
+            {loading ? 'Calculating...' : 'Calculate Route'}
         </Button>
       </CardFooter>
     </Card>

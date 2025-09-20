@@ -8,10 +8,8 @@ import RoutePlanner from "./RoutePlanner";
 import RechargeDialog from "./RechargeDialog";
 import BookingDialog from "./BookingDialog";
 import MyBookings from "./MyBookings";
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Route, CalendarDays, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Route, CalendarDays } from 'lucide-react';
 
 
 export default function Controls({
@@ -22,6 +20,7 @@ export default function Controls({
     handleEndSession,
     handleStationSelect,
     onPlanRoute,
+    loadingRoute,
     isRechargeOpen,
     handleRecharge,
     hasRoute,
@@ -35,8 +34,7 @@ export default function Controls({
     activeBookingForSelectedStation,
     originRef,
     destinationRef,
-    distance,
-    duration
+    navigationCard
 }) {
 
     return (
@@ -56,6 +54,8 @@ export default function Controls({
                         activeBooking={activeBookingForSelectedStation}
                         hasOtherBooking={userBookings.length > 0 && !activeBookingForSelectedStation}
                     />
+                ) : hasRoute ? (
+                    navigationCard
                 ) : (
                     <Tabs defaultValue="planner" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
@@ -67,23 +67,8 @@ export default function Controls({
                                 onPlanRoute={onPlanRoute} 
                                 originRef={originRef}
                                 destinationRef={destinationRef}
-                                distance={distance}
-                                duration={duration}
+                                loading={loadingRoute}
                             />
-                             {hasRoute && (
-                                <Card className="mt-4">
-                                    <CardHeader>
-                                        <CardTitle>Route Details</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p>Distance: {distance}</p>
-                                        <p>Duration: {duration}</p>
-                                    </CardContent>
-                                    <Button variant="outline" onClick={onClearRoute} className="w-full">
-                                        <X className="mr-2 h-4 w-4" /> Clear Route
-                                    </Button>
-                                </Card>
-                            )}
                         </TabsContent>
                         <TabsContent value="bookings">
                             <MyBookings 

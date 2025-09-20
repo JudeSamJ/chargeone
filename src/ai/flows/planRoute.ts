@@ -27,6 +27,7 @@ const planRouteFlow = ai.defineFlow(
     const route = directionsResult.routes[0];
     const leg = route.legs[0];
     
+    // Simple range calculation: 1 kWh gives ~5 km range.
     const vehicleMaxRangeKm = vehicle.batteryCapacity * 5; 
     const safetyBufferKm = 50; // Leave a 50km buffer
     let currentChargeKm = vehicleMaxRangeKm * (vehicle.currentCharge / 100);
@@ -38,7 +39,6 @@ const planRouteFlow = ai.defineFlow(
         return {
             route: directionsResult,
             requiredChargingStations: [],
-            allNearbyStations: [],
             totalDistance: leg.distance?.value || 0,
             totalDuration: leg.duration?.value || 0,
         };
@@ -107,7 +107,6 @@ const planRouteFlow = ai.defineFlow(
     return {
       route: directionsResult,
       requiredChargingStations: bestRequiredStations,
-      allNearbyStations: [], // We no longer need to return all nearby stations
       totalDistance: totalDistanceMeters,
       totalDuration: totalDurationSeconds,
     };
