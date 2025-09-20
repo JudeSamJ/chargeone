@@ -51,6 +51,22 @@ export default function MapView({
     const [decodedPath, setDecodedPath] = useState([]);
     const isNavigating = !!directionsResponse;
 
+    const mapThemeStyles = theme === 'dark' ? mapStylesDark : mapStylesLight;
+    
+    const navigationArrowIcon = useMemo(() => {
+        if (!isLoaded) return null;
+        return {
+          path: "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z", // Navigation arrow SVG path
+          fillColor: '#4285F4',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+          rotation: currentLocation?.heading || 0,
+          scale: 1.5,
+          anchor: new window.google.maps.Point(12, 12)
+        };
+    }, [isLoaded, currentLocation?.heading]);
+
     useEffect(() => {
         if (!route) {
           setDecodedPath([]);
@@ -176,9 +192,6 @@ export default function MapView({
             scale: 7,
         };
     };
-    
-    const mapThemeStyles = theme === 'dark' ? mapStylesDark : mapStylesLight;
-
 
     if (loadError) return <div className="flex items-center justify-center h-full w-full bg-muted rounded-lg"><p>Error loading map</p></div>;
     if (!isLoaded || !locationReady) return <div className="flex items-center justify-center h-full w-full bg-muted rounded-lg"><p>Getting your location...</p></div>;
@@ -186,20 +199,6 @@ export default function MapView({
     const activeStation = activeMarker && 'name' in activeMarker.content ? activeMarker.content : null;
     const activeTitle = activeMarker && 'title' in activeMarker.content ? activeMarker.content.title : null;
     
-    const navigationArrowIcon = useMemo(() => {
-        if (!isLoaded) return null;
-        return {
-          path: "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z", // Navigation arrow SVG path
-          fillColor: '#4285F4',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
-          rotation: currentLocation?.heading || 0,
-          scale: 1.5,
-          anchor: new window.google.maps.Point(12, 12)
-        };
-    }, [isLoaded, currentLocation?.heading]);
-
     const routeLeg = directionsResponse?.routes[0]?.legs[0];
 
     return (
