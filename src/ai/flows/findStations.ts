@@ -69,7 +69,10 @@ const findStationsFlow = ai.defineFlow(
     stations.sort((a, b) => {
         if (a.status === 'available' && b.status !== 'available') return -1;
         if (a.status !== 'available' && b.status === 'available') return 1;
-        return b.power - a.power;
+        if (a.status === 'available' && b.status === 'available') {
+            return b.power - a.power; // Higher power is better
+        }
+        return 0; // Keep original order for non-available stations
     });
 
     return stations;
