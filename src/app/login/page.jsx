@@ -10,7 +10,26 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signInWithGoogle, signInWithApple, signInWithEmail, signInWithPhoneNumber, verifyPhoneNumberOtp } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
+
+// Google Icon SVG Component
+const GoogleIcon = (props) => (
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path
+        d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-5.067 2.4-4.32 0-7.733-3.5-7.733-7.733s3.413-7.733 7.733-7.733c2.373 0 4.147.933 5.333 2.027l2.547-2.547C18.4 1.867 15.6 0 12.48 0 5.867 0 0 5.867 0 12.48s5.867 12.48 12.48 12.48c7.04 0 12.067-4.8 12.067-12.32 0-.733-.067-1.467-.187-2.16H12.48z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+  
+  // Apple Icon SVG Component
+  const AppleIcon = (props) => (
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path
+        d="M12.152 6.896c-.922 0-1.855.487-2.578 1.488-.733 1.01-.983 2.456.262 3.95s1.69.207 3.277-1.24c.768-.696 1.334-2.132 1.334-3.32C14.447 7.33 13.434 6.896 12.152 6.896zm4.846 12.203C15.424 21.058 14 24 11.53 24c-2.443 0-3.23-1.57-4.71-1.57-1.51 0-2.83.98-3.792 2.536-1.01.99-2.074 1.05-2.828.98-2.396-.28-3.95-2.02-3.95-5.323 0-3.362 2.44-5.366 4.71-5.366 1.48 0 2.653.946 3.73 1.01s2.21-.92 3.92-1.01c2.01-.12 3.65.01 5.31 1.76.7.74 1.13 1.76.79 2.89-.33 1.1-.98 1.86-1.76 2.53l.21.14c1.23-.74 1.69-1.53 1.69-2.39 0-.61-.31-1.21-.86-1.63-.04-.04-.07-.06-.1-.1l-.01-.01c-.11-.09-.23-.19-.36-.29-1.53-1.18-3.9-1.5-5.46-.86-1.59.65-2.42 2.22-2.18 3.85.24 1.64 1.75 2.76 3.35 2.11 1.58-.64 2.17-2.32 1.93-3.95-.08-.53-.29-.98-.59-1.32-.2-.23-.44-.43-.71-.59-.03-.02-.06-.03-.09-.05l.29.13z"
+        fill="currentColor"
+      />
+    </svg>
+  );
 
 export default function LoginPage() {
     const router = useRouter();
@@ -160,11 +179,11 @@ export default function LoginPage() {
                     
                     <div className="grid grid-cols-2 gap-4">
                         <Button variant="outline" onClick={handleGoogleSignIn}>
-                            <Image src="https://picsum.photos/20/20" data-ai-hint="google logo" width={20} height={20} className="mr-2 h-5 w-5" alt="Google" />
+                            <GoogleIcon className="mr-2 h-5 w-5" />
                             Google
                         </Button>
                         <Button variant="outline" onClick={handleAppleSignIn}>
-                            <Image src="https://picsum.photos/20/20" data-ai-hint="apple logo" width={20} height={20} className="mr-2 h-5 w-5" alt="Apple" />
+                            <AppleIcon className="mr-2 h-5 w-5" />
                             Apple
                         </Button>
                     </div>
