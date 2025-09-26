@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Car, BatteryFull, Save, Camera } from "lucide-react";
+import { Car, BatteryFull, Save, Camera, Loader2 } from "lucide-react";
 import CameraCaptureDialog from "@/components/charge-one/CameraCaptureDialog";
 import { identifyVehicle } from "@/ai/flows/identifyVehicle";
 import { useToast } from "@/hooks/use-toast";
@@ -100,37 +100,53 @@ export default function VehicleDetailsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-8">
-                        <div className="space-y-2">
-                            <Label htmlFor="vehicle-select">Vehicle Model</Label>
-                             <Select onValueChange={handleVehicleChange} value={selectedVehicleValue}>
-                                <SelectTrigger id="vehicle-select" disabled={isIdentifying}>
-                                    <SelectValue placeholder="Select your vehicle" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {vehicles.map(v => (
-                                        <SelectItem key={`${v.make}-${v.model}`} value={`${v.make}|${v.model}`}>
-                                            {v.make} {v.model}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                       <div className="space-y-4">
+                           <div className="space-y-2">
+                               <Label htmlFor="vehicle-select">Vehicle Model</Label>
+                                <Select onValueChange={handleVehicleChange} value={selectedVehicleValue}>
+                                   <SelectTrigger id="vehicle-select" disabled={isIdentifying}>
+                                       <SelectValue placeholder="Select your vehicle" />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                       {vehicles.map(v => (
+                                           <SelectItem key={`${v.make}-${v.model}`} value={`${v.make}|${v.model}`}>
+                                               {v.make} {v.model}
+                                           </SelectItem>
+                                       ))}
+                                   </SelectContent>
+                               </Select>
+                           </div>
 
-                         <Button 
-                            variant="outline" 
-                            className="w-full" 
-                            onClick={() => setIsCameraOpen(true)}
-                            disabled={isIdentifying}
-                        >
-                            {isIdentifying ? (
-                                "Identifying..."
-                            ) : (
-                                <>
-                                    <Camera className="mr-2" />
-                                    Identify with Camera
-                                </>
-                            )}
-                        </Button>
+                           <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-card px-2 text-muted-foreground">
+                                        OR
+                                    </span>
+                                </div>
+                            </div>
+
+                            <Button 
+                               variant="outline" 
+                               className="w-full" 
+                               onClick={() => setIsCameraOpen(true)}
+                               disabled={isIdentifying}
+                           >
+                               {isIdentifying ? (
+                                   <>
+                                     <Loader2 className="mr-2 animate-spin" />
+                                     Identifying Vehicle...
+                                   </>
+                               ) : (
+                                   <>
+                                       <Camera className="mr-2" />
+                                       Scan with Camera
+                                   </>
+                               )}
+                           </Button>
+                       </div>
 
                         <div className="space-y-4">
                             <div className="flex justify-between items-baseline">
@@ -161,6 +177,7 @@ export default function VehicleDetailsPage() {
                 isOpen={isCameraOpen}
                 onOpenChange={setIsCameraOpen}
                 onCapture={handlePhotoCapture}
+                identifyVehicle={identifyVehicle}
             />
         </>
     );
