@@ -42,7 +42,7 @@ export default function LoginPage() {
     const handleGoogleSignIn = async () => {
         try {
             await signInWithGoogle();
-            router.push('/');
+            router.push('/vehicle-details');
         } catch (error) {
             console.error("Google Sign In Failed", error);
             toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in with Google." });
@@ -52,7 +52,7 @@ export default function LoginPage() {
     const handleAppleSignIn = async () => {
         try {
             await signInWithApple();
-            router.push('/');
+            router.push('/vehicle-details');
         } catch (error) {
             console.error("Apple Sign In Failed", error);
             toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in with Apple." });
@@ -104,7 +104,7 @@ export default function LoginPage() {
         try {
             await verifyPhoneNumberOtp(confirmationResult, otp);
             toast({ title: "Success", description: "You have been logged in." });
-            router.push('/');
+            router.push('/vehicle-details');
         } catch (error) {
             console.error("OTP verification failed", error);
             toast({ variant: "destructive", title: "Invalid OTP", description: "The OTP you entered is incorrect." });
@@ -176,12 +176,12 @@ export default function LoginPage() {
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
-                        <Button variant="outline" onClick={handleGoogleSignIn} className="text-[#4285F4]">
-                            <GoogleIcon className="mr-2 h-5 w-5" />
+                        <Button variant="outline" onClick={handleGoogleSignIn}>
+                            <GoogleIcon className="mr-2 h-5 w-5 fill-[#4285F4]" />
                             Google
                         </Button>
-                        <Button variant="outline" onClick={handleAppleSignIn} className="text-black dark:text-white">
-                            <AppleIcon className="mr-2 h-5 w-5" />
+                        <Button variant="outline" onClick={handleAppleSignIn}>
+                            <AppleIcon className="mr-2 h-5 w-5 fill-black dark:fill-white" />
                             Apple
                         </Button>
                     </div>

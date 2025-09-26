@@ -66,8 +66,7 @@ function HomePageContent() {
         const guestVehicle = { ...defaultVehicle, currentCharge: 80 };
         setUserVehicle(guestVehicle);
         localStorage.setItem('userVehicle', JSON.stringify(guestVehicle));
-      }
-      else if (user) {
+      } else {
         router.push('/vehicle-details');
       }
     }
@@ -251,7 +250,7 @@ function HomePageContent() {
                   onClearRoute={clearRoute}
                   isBookingOpen={isBookingOpen}
                   setIsBookingOpen={setIsBookingOpen}
-                  onBookingConfirm={handleBookingConfirm}
+                  onBookingConfirm={onBookingConfirm}
                   isGuest={isGuest}
                   userBookings={userBookings}
                   onCancelBooking={handleCancelBooking}
