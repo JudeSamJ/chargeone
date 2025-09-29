@@ -230,7 +230,7 @@ function HomePageContent() {
   } : null;
 
   return (
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider defaultOpen={true}>
         <Sidebar variant="floating" side="left" collapsible="icon">
           <SidebarRail />
           <SidebarContent className="p-4">
