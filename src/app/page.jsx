@@ -250,7 +250,7 @@ function HomePageContent() {
                   onClearRoute={clearRoute}
                   isBookingOpen={isBookingOpen}
                   setIsBookingOpen={setIsBookingOpen}
-                  onBookingConfirm={onBookingConfirm}
+                  onBookingConfirm={handleBookingConfirm}
                   isGuest={isGuest}
                   userBookings={userBookings}
                   onCancelBooking={handleCancelBooking}
