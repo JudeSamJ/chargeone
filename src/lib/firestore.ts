@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { db } from './firebase'; // Use client-side firebase
@@ -45,8 +46,8 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
                 userId: data.userId,
                 stationId: data.stationId,
                 stationName: data.stationName,
-                bookingTime: data.bookingTime,
-                createdAt: data.createdAt,
+                bookingTime: data.bookingTime.toDate(), // Correctly convert Timestamp to Date
+                createdAt: data.createdAt.toDate(),
             });
         });
         return bookings;

@@ -9,9 +9,8 @@ import { differenceInMinutes, format } from 'date-fns';
 export default function MyBookings({ bookings, onCancelBooking }) {
 
   const canCancel = (bookingTime) => {
-    // Ensure bookingTime is a Date object before comparison
-    const bookingDate = bookingTime.toDate ? bookingTime.toDate() : bookingTime;
-    return differenceInMinutes(bookingDate, new Date()) >= 15;
+    // No need to convert, it's already a Date object
+    return differenceInMinutes(bookingTime, new Date()) >= 15;
   };
 
   if (!bookings || bookings.length === 0) {
@@ -38,13 +37,12 @@ export default function MyBookings({ bookings, onCancelBooking }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {bookings.map(booking => {
-            const bookingTimeAsDate = booking.bookingTime.toDate ? booking.bookingTime.toDate() : booking.bookingTime;
             return (
               <div key={booking.id} className="p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <p className="font-semibold truncate">{booking.stationName}</p>
                   <p className="text-sm text-muted-foreground">
-                    {format(bookingTimeAsDate, "EEE, MMM d, yyyy 'at' h:mm a")}
+                    {format(booking.bookingTime, "EEE, MMM d, yyyy 'at' h:mm a")}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -52,8 +50,8 @@ export default function MyBookings({ bookings, onCancelBooking }) {
                     variant="destructive" 
                     size="sm"
                     onClick={() => onCancelBooking(booking)} 
-                    disabled={!canCancel(bookingTimeAsDate)}
-                    title={canCancel(bookingTimeAsDate) ? "Cancel Booking" : "Cannot cancel within 15 mins of start time"}
+                    disabled={!canCancel(booking.bookingTime)}
+                    title={canCancel(booking.bookingTime) ? "Cancel Booking" : "Cannot cancel within 15 mins of start time"}
                   >
                     <X className="mr-2 h-4 w-4" /> Cancel
                   </Button>
