@@ -44,8 +44,10 @@ export default function LoginPage() {
             await signInWithGoogle();
             router.push('/vehicle-details');
         } catch (error) {
-            console.error("Google Sign In Failed", error);
-            toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in with Google." });
+            if (error.code !== 'auth/popup-closed-by-user') {
+                console.error("Google Sign In Failed", error);
+                toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in with Google." });
+            }
         }
     };
 
@@ -54,8 +56,10 @@ export default function LoginPage() {
             await signInWithApple();
             router.push('/vehicle-details');
         } catch (error) {
-            console.error("Apple Sign In Failed", error);
-            toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in with Apple." });
+            if (error.code !== 'auth/popup-closed-by-user') {
+                console.error("Apple Sign In Failed", error);
+                toast({ variant: "destructive", title: "Login Failed", description: "Could not sign in with Apple." });
+            }
         }
     };
     
