@@ -19,6 +19,7 @@ import SidebarNav from '@/components/charge-one/SidebarNav';
 import SidebarPanel from '@/components/charge-one/SidebarPanel';
 import ChargingSession from '@/components/charge-one/ChargingSession';
 import BookingDialog from '@/components/charge-one/BookingDialog';
+import FilterDialog from '@/components/charge-one/FilterDialog';
 
 function HomePageContent() {
   const [stations, setStations] = useState([]);
@@ -37,6 +38,8 @@ function HomePageContent() {
   const [route, setRoute] = useState(null);
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [activePanel, setActivePanel] = useState('planner');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState(['CCS', 'CHAdeMO', 'Type 2']);
 
   const { toast } = useToast();
   const { user, loading } = useAuth();
@@ -63,11 +66,14 @@ function HomePageContent() {
     } else if (!loading && (user || isGuest)) {
       const storedVehicle = localStorage.getItem('userVehicle');
       if (storedVehicle) {
-        setUserVehicle(JSON.parse(storedVehicle));
+        const parsedVehicle = JSON.parse(storedVehicle);
+        setUserVehicle(parsedVehicle);
+        setActiveFilters([parsedVehicle.connectorType]);
       } else if(isGuest) {
         const guestVehicle = { ...defaultVehicle, currentCharge: 80 };
         setUserVehicle(guestVehicle);
         localStorage.setItem('userVehicle', JSON.stringify(guestVehicle));
+        setActiveFilters([guestVehicle.connectorType]);
       } else {
         router.push('/vehicle-details');
       }
@@ -306,6 +312,7 @@ function HomePageContent() {
               showTraffic={showTraffic}
               onShowTrafficChange={setShowTraffic}
               onRecenter={recenterMap}
+              onFilterClick={() => setIsFilterOpen(true)}
             />
             <MapView 
                 onStationsFound={handleStationsFound} 
@@ -319,6 +326,7 @@ function HomePageContent() {
                 showTraffic={showTraffic}
                 bookedStationIds={bookedStationIds}
                 setRecenterCallback={setRecenterMap}
+                activeFilters={activeFilters}
             />
         </div>
         <Toaster />
@@ -327,6 +335,13 @@ function HomePageContent() {
           onOpenChange={setIsBookingOpen}
           station={selectedStation}
           onConfirm={handleBookingConfirm}
+        />
+        <FilterDialog
+          isOpen={isFilterOpen}
+          onOpenChange={setIsFilterOpen}
+          activeFilters={activeFilters}
+          onFiltersChange={setActiveFilters}
+          userVehicleConnector={userVehicle?.connectorType}
         />
       </div>
   );

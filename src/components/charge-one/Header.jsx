@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Bolt, LogOut, LocateFixed } from 'lucide-react';
+import { Bolt, LogOut, LocateFixed, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { signOutWithGoogle } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,7 @@ import { Button } from '../ui/button';
 import MapControls from './MapControls';
 
 
-export default function Header({ mapTypeId, onMapTypeIdChange, showTraffic, onShowTrafficChange, onRecenter }) {
+export default function Header({ mapTypeId, onMapTypeIdChange, showTraffic, onShowTrafficChange, onRecenter, onFilterClick }) {
     const { user, loading } = useAuth();
     const router = useRouter();
 
@@ -52,6 +52,10 @@ export default function Header({ mapTypeId, onMapTypeIdChange, showTraffic, onSh
                     <Button variant="outline" size="icon" onClick={onRecenter}>
                         <LocateFixed className="h-[1.2rem] w-[1.2rem]" />
                         <span className="sr-only">Recenter Map</span>
+                    </Button>
+                     <Button variant="outline" size="icon" onClick={onFilterClick}>
+                        <Filter className="h-[1.2rem] w-[1.2rem]" />
+                        <span className="sr-only">Filter Stations</span>
                     </Button>
                     <MapControls 
                         mapTypeId={mapTypeId}

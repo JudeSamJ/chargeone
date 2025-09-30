@@ -35,7 +35,8 @@ export default function MapView({
     mapTypeId,
     showTraffic,
     bookedStationIds,
-    setRecenterCallback
+    setRecenterCallback,
+    activeFilters,
 }) {
     const { isLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: "AIzaSyBMltP754BsiINUjJ90C0HE5YE0As2cTcc",
@@ -52,6 +53,15 @@ export default function MapView({
     const isNavigating = !!directionsResponse;
 
     const mapThemeStyles = theme === 'dark' ? mapStylesDark : mapStylesLight;
+
+    const filteredStations = useMemo(() => {
+        if (!activeFilters || activeFilters.length === 0) {
+          return stations;
+        }
+        return stations.filter(station =>
+          station.connectors.some(connector => activeFilters.includes(connector))
+        );
+      }, [stations, activeFilters]);
     
     const navigationArrowIcon = useMemo(() => {
         if (!isLoaded) return null;
@@ -231,7 +241,7 @@ export default function MapView({
                   />
                 )}
                 
-                {stations.map(station => (
+                {filteredStations.map(station => (
                     <MarkerF
                         key={station.id}
                         position={{ lat: station.lat, lng: station.lng }}

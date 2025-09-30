@@ -6,6 +6,7 @@ export interface Vehicle {
   model: string;
   batteryCapacity: number; // in kWh
   currentCharge: number; // in %
+  connectorType: 'CCS' | 'CHAdeMO' | 'Type 2';
 }
 
 export const StationSchema = z.object({
@@ -68,3 +69,4 @@ export const PlanRouteOutputSchema = z.object({
 
 export type PlanRouteInput = z.infer<typeof PlanRouteInputSchema>;
 export type PlanRouteOutput = z.infer<typeof PlanRouteOutputSchema>;
+

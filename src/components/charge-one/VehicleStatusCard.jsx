@@ -1,9 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, BatteryFull, BatteryMedium, BatteryLow, BatteryWarning } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Car, BatteryFull, BatteryMedium, BatteryLow, BatteryWarning, Plug } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Separator } from '../ui/separator';
 
 export default function VehicleStatusCard({ vehicle }) {
-  const { make, model, batteryCapacity, currentCharge } = vehicle;
+  const { make, model, batteryCapacity, currentCharge, connectorType } = vehicle;
 
   const getBatteryInfo = (charge) => {
     if (charge > 75) {
@@ -21,7 +22,7 @@ export default function VehicleStatusCard({ vehicle }) {
   const { Icon, color } = getBatteryInfo(currentCharge);
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Your Vehicle</CardTitle>
         <Car className="h-5 w-5 text-muted-foreground" />
@@ -41,6 +42,26 @@ export default function VehicleStatusCard({ vehicle }) {
           </div>
         </div>
       </CardContent>
+      <Separator className="my-2" />
+      <CardFooter className="flex-col items-start pt-4">
+        <p className="text-sm font-medium mb-2">Vehicle Details</p>
+         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm w-full">
+            <div className="flex items-center gap-2">
+                <Plug className="h-4 w-4 text-muted-foreground" />
+                <div>
+                    <p className="text-muted-foreground">Connector</p>
+                    <p className="font-semibold">{connectorType}</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-2">
+                <BatteryFull className="h-4 w-4 text-muted-foreground" />
+                <div>
+                    <p className="text-muted-foreground">Battery</p>
+                    <p className="font-semibold">{batteryCapacity} kWh</p>
+                </div>
+            </div>
+         </div>
+      </CardFooter>
     </Card>
   );
 }
