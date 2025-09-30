@@ -10,14 +10,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { planRoute } from '@/ai/flows/planRoute';
-import Controls from '@/components/charge-one/Controls';
-import { SidebarProvider, Sidebar, SidebarInset, SidebarContent, SidebarRail } from '@/components/ui/sidebar';
 import Header from '@/components/charge-one/Header';
 import { createBooking, getUserBookings, cancelBooking } from '@/lib/firestore';
 import { differenceInMinutes } from 'date-fns';
 import { formatDistance, formatDuration } from './utils';
 import LiveNavigationCard from '@/components/charge-one/LiveNavigationCard';
-
+import SidebarNav from '@/components/charge-one/SidebarNav';
+import SidebarPanel from '@/components/charge-one/SidebarPanel';
+import ChargingSession from '@/components/charge-one/ChargingSession';
 
 function HomePageContent() {
   const [stations, setStations] = useState([]);
@@ -35,6 +35,7 @@ function HomePageContent() {
   const [directionsResponse, setDirectionsResponse] = useState(null);
   const [route, setRoute] = useState(null);
   const [loadingRoute, setLoadingRoute] = useState(false);
+  const [activePanel, setActivePanel] = useState('planner');
 
   const { toast } = useToast();
   const { user, loading } = useAuth();
@@ -83,15 +84,20 @@ function HomePageContent() {
       originRef.current.value = `${currentLocation.lat}, ${currentLocation.lng}`;
     }
   }, [currentLocation]);
-
   
   const handleStationSelect = (station) => {
     setSelectedStation(station);
+    if(station) {
+      setActivePanel(null); // Close panel to show charging session
+    } else {
+      setActivePanel('planner'); // Re-open planner when deselected
+    }
   };
-
+  
   const handleEndSession = (cost) => {
     setWalletBalance((prev) => prev - cost);
     setSelectedStation(null);
+    setActivePanel('planner');
   };
 
   const handleRecharge = (amount) => {
@@ -124,6 +130,7 @@ function HomePageContent() {
         const newStations = result.requiredChargingStations.filter(s => !existingStationIds.has(s.id));
         return [...prevStations, ...newStations];
       });
+      setActivePanel(null); // Hide panel to show navigation card
       
     } catch (error) {
       console.error("Error planning route:", error);
@@ -139,6 +146,7 @@ function HomePageContent() {
     setRoute(null);
     setDirectionsResponse(null);
     if (destinationRef.current) destinationRef.current.value = '';
+    setActivePanel('planner');
   }, []);
   
   const handleBookingConfirm = async (date, time) => {
@@ -149,7 +157,6 @@ function HomePageContent() {
 
     setIsBookingOpen(false);
 
-    // Combine date and time
     const [hours, minutes] = time.split(':');
     const bookingDateTime = new Date(date);
     bookingDateTime.setHours(parseInt(hours, 10));
@@ -158,7 +165,7 @@ function HomePageContent() {
 
     try {
       await createBooking(user.uid, selectedStation, bookingDateTime);
-      await fetchUserBookings(user.uid); // Refresh bookings
+      await fetchUserBookings(user.uid);
       toast({
         title: "Slot Booked!",
         description: `Your slot at ${selectedStation?.name} is confirmed for ${bookingDateTime.toLocaleDateString()} at ${time}.`,
@@ -189,7 +196,7 @@ function HomePageContent() {
   
     try {
       await cancelBooking(booking.id);
-      await fetchUserBookings(user.uid); // Refresh bookings
+      await fetchUserBookings(user.uid);
       toast({
         title: "Booking Cancelled",
         description: `Your booking at ${booking.stationName} has been cancelled.`,
@@ -208,11 +215,27 @@ function HomePageContent() {
     setStations(foundStations);
   }, []);
 
+  const handlePanelToggle = (panel) => {
+    if (activePanel === panel) {
+      setActivePanel(null);
+    } else {
+      setActivePanel(panel);
+    }
+    // Clear route and selection when opening a panel
+    if(route) setRoute(null);
+    if(directionsResponse) setDirectionsResponse(null);
+    if(selectedStation) setSelectedStation(null);
+  };
+
+
   if (loading || (!user && !isGuest) || !userVehicle) {
     return (
         <div className="relative h-screen w-screen">
             <Skeleton className="h-full w-full" />
-            <div className="absolute top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm rounded-lg p-2 border">
+                <Skeleton className="h-16 w-[90vw] sm:w-[400px]" />
+            </div>
+             <div className="absolute top-24 left-4 z-10">
                 <Skeleton className="h-[600px] w-[400px]" />
             </div>
         </div>
@@ -229,46 +252,64 @@ function HomePageContent() {
     endAddress: directionsResponse.routes[0].legs[0].end_address,
   } : null;
 
-  return (
-      <SidebarProvider defaultOpen={true}>
-        <Sidebar variant="floating" side="left" collapsible="icon">
-          <SidebarRail />
-          <SidebarContent className="p-4">
-              <Controls
-                  userVehicle={userVehicle}
-                  walletBalance={walletBalance}
-                  setIsRechargeOpen={setIsRechargeOpen}
-                  selectedStation={selectedStation}
-                  handleEndSession={handleEndSession}
-                  handleStationSelect={handleStationSelect}
-                  onPlanRoute={calculateRoute}
-                  loadingRoute={loadingRoute}
-                  isRechargeOpen={isRechargeOpen}
-                  handleRecharge={handleRecharge}
-                  currentLocation={currentLocation}
-                  hasRoute={hasActiveRoute}
-                  onClearRoute={clearRoute}
-                  isBookingOpen={isBookingOpen}
-                  setIsBookingOpen={setIsBookingOpen}
-                  onBookingConfirm={handleBookingConfirm}
-                  isGuest={isGuest}
-                  userBookings={userBookings}
-                  onCancelBooking={handleCancelBooking}
-                  activeBookingForSelectedStation={activeBookingForSelectedStation}
-                  originRef={originRef}
-                  destinationRef={destinationRef}
-                  navigationCard={navigationData ? <LiveNavigationCard data={navigationData} onClearRoute={clearRoute} /> : null}
-              />
-          </SidebarContent>
-        </Sidebar>
-        <SidebarInset>
-          <Header 
-            mapTypeId={mapTypeId}
-            onMapTypeIdChange={setMapTypeId}
-            showTraffic={showTraffic}
-            onShowTrafficChange={setShowTraffic}
-            onRecenter={recenterMap}
+  let mainContent = null;
+  if(selectedStation) {
+      mainContent = (
+          <ChargingSession
+            station={selectedStation}
+            vehicle={userVehicle}
+            onEndSession={handleEndSession}
+            onClearSelection={() => handleStationSelect(null)}
+            onBookSlot={() => setIsBookingOpen(true)}
+            isGuest={isGuest}
+            activeBooking={activeBookingForSelectedStation}
+            hasOtherBooking={userBookings.length > 0 && !activeBookingForSelectedStation}
+            onCancelBooking={handleCancelBooking}
           />
+      );
+  } else if (hasActiveRoute && navigationData) {
+      mainContent = <LiveNavigationCard data={navigationData} onClearRoute={clearRoute} />;
+  }
+
+  return (
+      <div className="relative h-screen w-screen overflow-hidden">
+        <SidebarNav activePanel={activePanel} onPanelToggle={handlePanelToggle} isGuest={isGuest} />
+        
+        <div className="absolute top-24 left-20 z-10 w-[380px]">
+          {mainContent}
+        </div>
+        
+        <SidebarPanel
+            activePanel={activePanel}
+            onClose={() => setActivePanel(null)}
+            isGuest={isGuest}
+            userVehicle={userVehicle}
+            walletBalance={walletBalance}
+            onRechargeClick={() => setIsRechargeOpen(true)}
+            onPlanRoute={calculateRoute}
+            originRef={originRef}
+            destinationRef={destinationRef}
+            loadingRoute={loadingRoute}
+            userBookings={userBookings}
+            onCancelBooking={handleCancelBooking}
+            onSelectStation={handleStationSelect}
+            isRechargeOpen={isRechargeOpen}
+            setIsRechargeOpen={setIsRechargeOpen}
+            handleRecharge={handleRecharge}
+            isBookingOpen={isBookingOpen}
+            setIsBookingOpen={setIsBookingOpen}
+            selectedStation={selectedStation}
+            onBookingConfirm={handleBookingConfirm}
+        />
+        
+        <div className="h-full w-full">
+            <Header 
+              mapTypeId={mapTypeId}
+              onMapTypeIdChange={setMapTypeId}
+              showTraffic={showTraffic}
+              onShowTrafficChange={setShowTraffic}
+              onRecenter={recenterMap}
+            />
             <MapView 
                 onStationsFound={handleStationsFound} 
                 stations={stations}
@@ -282,9 +323,9 @@ function HomePageContent() {
                 bookedStationIds={bookedStationIds}
                 setRecenterCallback={setRecenterMap}
             />
-        </SidebarInset>
+        </div>
         <Toaster />
-      </SidebarProvider>
+      </div>
   );
 }
 

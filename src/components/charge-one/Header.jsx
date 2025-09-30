@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from './ThemeToggle';
-import { SidebarTrigger } from '../ui/sidebar';
 import { Button } from '../ui/button';
 import MapControls from './MapControls';
 
@@ -45,8 +44,7 @@ export default function Header({ mapTypeId, onMapTypeIdChange, showTraffic, onSh
         <header className="absolute top-4 left-4 right-4 z-10 bg-background/80 backdrop-blur-sm rounded-lg p-2 border">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                <div className="flex items-center gap-3">
-                    <SidebarTrigger />
+                <div className="flex items-center gap-3 pl-14">
                     <Bolt className="h-7 w-7 text-primary" />
                     <h1 className="text-2xl font-bold text-primary font-headline">ChargeOne</h1>
                 </div>
