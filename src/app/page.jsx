@@ -18,6 +18,7 @@ import LiveNavigationCard from '@/components/charge-one/LiveNavigationCard';
 import SidebarNav from '@/components/charge-one/SidebarNav';
 import SidebarPanel from '@/components/charge-one/SidebarPanel';
 import ChargingSession from '@/components/charge-one/ChargingSession';
+import BookingDialog from '@/components/charge-one/BookingDialog';
 
 function HomePageContent() {
   const [stations, setStations] = useState([]);
@@ -183,7 +184,7 @@ function HomePageContent() {
   const handleCancelBooking = async (booking) => {
     if (!user) return;
   
-    const minutesToBooking = differenceInMinutes(booking.bookingTime.toDate(), new Date());
+    const minutesToBooking = differenceInMinutes(booking.bookingTime, new Date());
   
     if (minutesToBooking < 15) {
       toast({
@@ -296,10 +297,6 @@ function HomePageContent() {
             isRechargeOpen={isRechargeOpen}
             setIsRechargeOpen={setIsRechargeOpen}
             handleRecharge={handleRecharge}
-            isBookingOpen={isBookingOpen}
-            setIsBookingOpen={setIsBookingOpen}
-            selectedStation={selectedStation}
-            onBookingConfirm={handleBookingConfirm}
         />
         
         <div className="h-full w-full">
@@ -325,6 +322,12 @@ function HomePageContent() {
             />
         </div>
         <Toaster />
+        <BookingDialog
+          isOpen={isBookingOpen}
+          onOpenChange={setIsBookingOpen}
+          station={selectedStation}
+          onConfirm={handleBookingConfirm}
+        />
       </div>
   );
 }

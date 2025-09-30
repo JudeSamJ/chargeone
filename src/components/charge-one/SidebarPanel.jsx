@@ -9,7 +9,6 @@ import VehicleStatusCard from "./VehicleStatusCard";
 import RoutePlanner from "./RoutePlanner";
 import MyBookings from "./MyBookings";
 import RechargeDialog from './RechargeDialog';
-import BookingDialog from './BookingDialog';
 
 const panelVariants = {
   hidden: { x: '-100%', opacity: 0 },
@@ -33,10 +32,6 @@ export default function SidebarPanel({
     isRechargeOpen,
     setIsRechargeOpen,
     handleRecharge,
-    isBookingOpen,
-    setIsBookingOpen,
-    selectedStation,
-    onBookingConfirm
 }) {
   const getPanelContent = () => {
     switch (activePanel) {
@@ -73,7 +68,6 @@ export default function SidebarPanel({
             <MyBookings
               bookings={userBookings}
               onCancelBooking={onCancelBooking}
-              onSelectStation={onSelectStation}
             />
           </>
         );
@@ -116,12 +110,6 @@ export default function SidebarPanel({
         onRecharge={handleRecharge}
         razorpayKeyId={process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? ""}
       />
-       <BookingDialog
-          isOpen={isBookingOpen}
-          onOpenChange={setIsBookingOpen}
-          station={selectedStation}
-          onConfirm={onBookingConfirm}
-        />
     </>
   );
 }

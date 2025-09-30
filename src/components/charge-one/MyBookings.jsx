@@ -6,11 +6,11 @@ import { Button } from '../ui/button';
 import { CalendarDays, X, MapPin } from 'lucide-react';
 import { differenceInMinutes, format } from 'date-fns';
 
-export default function MyBookings({ bookings, onCancelBooking, onSelectStation }) {
+export default function MyBookings({ bookings, onCancelBooking }) {
 
   const canCancel = (bookingTime) => {
     // Ensure bookingTime is a Date object before comparison
-    const bookingDate = bookingTime instanceof Date ? bookingTime : bookingTime.toDate();
+    const bookingDate = bookingTime.toDate ? bookingTime.toDate() : bookingTime;
     return differenceInMinutes(bookingDate, new Date()) >= 15;
   };
 

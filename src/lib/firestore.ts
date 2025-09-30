@@ -45,8 +45,8 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
                 userId: data.userId,
                 stationId: data.stationId,
                 stationName: data.stationName,
-                bookingTime: data.bookingTime.toDate(),
-                createdAt: data.createdAt.toDate(),
+                bookingTime: data.bookingTime,
+                createdAt: data.createdAt,
             });
         });
         return bookings;
