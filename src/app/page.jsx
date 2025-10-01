@@ -47,8 +47,10 @@ function HomePageContent() {
   const searchParams = useSearchParams();
   const isGuest = searchParams.get('guest') === 'true';
   
-  const originRef = useRef();
-  const destinationRef = useRef();
+  const originRef = useRef(null);
+  const destinationRef = useRef(null);
+  const [originAutocomplete, setOriginAutocomplete] = useState(null);
+  const [destinationAutocomplete, setDestinationAutocomplete] = useState(null);
 
   const fetchUserBookings = useCallback(async (uid) => {
     try {
@@ -132,9 +134,12 @@ function HomePageContent() {
     
     setLoadingRoute(true);
     try {
+      const origin = originRef.current.value;
+      const destination = destinationRef.current.value;
+      
       const result = await planRoute({
-        origin: originRef.current.value,
-        destination: destinationRef.current.value,
+        origin,
+        destination,
         vehicle: userVehicle,
       });
 
@@ -161,8 +166,10 @@ function HomePageContent() {
     setRoute(null);
     setDirectionsResponse(null);
     if (destinationRef.current) destinationRef.current.value = '';
+    if (originRef.current) originRef.current.value = '';
+    setOriginToCurrentLocation();
     setActivePanel('planner');
-  }, []);
+  }, [setOriginToCurrentLocation]);
   
   const handleBookingConfirm = async (date, time) => {
     if (!user || !selectedStation) {
@@ -237,8 +244,7 @@ function HomePageContent() {
       setActivePanel(panel);
     }
     // Clear route and selection when opening a panel
-    if(route) setRoute(null);
-    if(directionsResponse) setDirectionsResponse(null);
+    if(route) clearRoute();
     if(selectedStation) setSelectedStation(null);
   };
 
@@ -312,6 +318,10 @@ function HomePageContent() {
             isRechargeOpen={isRechargeOpen}
             setIsRechargeOpen={setIsRechargeOpen}
             handleRecharge={handleRecharge}
+            originAutocomplete={originAutocomplete}
+            setOriginAutocomplete={setOriginAutocomplete}
+            destinationAutocomplete={destinationAutocomplete}
+            setDestinationAutocomplete={setDestinationAutocomplete}
         />
         
         <div className="h-full w-full">
@@ -328,7 +338,6 @@ function HomePageContent() {
                 stations={stations}
                 onStationClick={handleStationSelect}
                 directionsResponse={directionsResponse}
-                route={route}
                 onLocationUpdate={setCurrentLocation}
                 currentLocation={currentLocation}
                 mapTypeId={mapTypeId}
@@ -363,3 +372,5 @@ export default function Home() {
     </Suspense>
   )
 }
+
+    

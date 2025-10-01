@@ -1,7 +1,7 @@
 
 "use client";
 
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, Polyline, TrafficLayer } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer, TrafficLayer } from '@react-google-maps/api';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { findStations } from '@/ai/flows/findStations';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +29,6 @@ export default function MapView({
     stations, 
     onStationClick, 
     directionsResponse,
-    route,
     onLocationUpdate, 
     currentLocation, 
     mapTypeId,
@@ -49,7 +48,6 @@ export default function MapView({
     const { toast } = useToast();
     const [locationReady, setLocationReady] = useState(false);
     const initialLocationSetRef = useRef(false);
-    const [decodedPath, setDecodedPath] = useState([]);
     const isNavigating = !!directionsResponse;
 
     const mapThemeStyles = theme === 'dark' ? mapStylesDark : mapStylesLight;
@@ -98,16 +96,6 @@ export default function MapView({
                 toast({ variant: 'destructive', title: 'Could not find nearby stations.'});
             });
     }, [onStationsFound, toast]);
-    
-    useEffect(() => {
-      if (isLoaded && route?.route?.routes[0]?.overview_polyline?.points) {
-        const path = window.google.maps.geometry.encoding.decodePath(route.route.routes[0].overview_polyline.points);
-        setDecodedPath(path);
-      } else {
-        // This is the crucial part: ensure the path is cleared when route is null
-        setDecodedPath([]);
-      }
-    }, [route, isLoaded]);
 
     useEffect(() => {
         if (!isLoaded) return;
@@ -206,8 +194,6 @@ export default function MapView({
     const activeStation = activeMarker && 'name' in activeMarker.content ? activeMarker.content : null;
     const activeTitle = activeMarker && 'title' in activeMarker.content ? activeMarker.content.title : null;
     
-    const routeLeg = directionsResponse?.routes[0]?.legs[0];
-
     return (
         <GoogleMap
             mapContainerStyle={mapContainerStyle}
@@ -225,12 +211,12 @@ export default function MapView({
         >
             {isLoaded && (
               <>
-                {currentLocation && (
+                {currentLocation && !isNavigating && (
                   <MarkerF
                       position={currentLocation}
                       title="Your Location"
                       onMouseOver={() => !isNavigating && setActiveMarker({ position: currentLocation, content: { title: 'Your Location' } })}
-                      icon={ isNavigating ? navigationArrowIcon : {
+                      icon={{
                           path: window.google.maps.SymbolPath.CIRCLE,
                           fillColor: '#4285F4',
                           fillOpacity: 1,
@@ -241,7 +227,7 @@ export default function MapView({
                   />
                 )}
                 
-                {filteredStations.map(station => (
+                {!isNavigating && filteredStations.map(station => (
                     <MarkerF
                         key={station.id}
                         position={{ lat: station.lat, lng: station.lng }}
@@ -292,30 +278,25 @@ export default function MapView({
                     </InfoWindowF>
                 )}
                 
-                {decodedPath.length > 0 && (
-                  <Polyline
-                    path={decodedPath}
-                    options={{
-                      strokeColor: theme === 'dark' ? '#5891F5' : '#4285F4',
-                      strokeOpacity: 0.8,
-                      strokeWeight: 6,
-                    }}
-                  />
+                {directionsResponse && (
+                    <DirectionsRenderer 
+                        directions={directionsResponse}
+                        options={{
+                            polylineOptions: {
+                                strokeColor: theme === 'dark' ? '#5891F5' : '#4285F4',
+                                strokeOpacity: 0.8,
+                                strokeWeight: 6,
+                            },
+                            suppressMarkers: true, // We handle markers ourselves
+                        }}
+                    />
                 )}
 
-                {routeLeg && (
-                  <>
+                {isNavigating && currentLocation && (
                     <MarkerF
-                      position={routeLeg.start_location}
-                      label={{ text: 'A', color: 'white' }}
-                      title={`Origin: ${routeLeg.start_address}`}
+                        position={currentLocation}
+                        icon={navigationArrowIcon}
                     />
-                     <MarkerF
-                      position={routeLeg.end_location}
-                      label={{ text: 'B', color: 'white' }}
-                      title={`Destination: ${routeLeg.end_address}`}
-                    />
-                  </>
                 )}
 
                 {showTraffic && <TrafficLayer autoUpdate />}
@@ -324,3 +305,5 @@ export default function MapView({
         </GoogleMap>
     );
 }
+
+    

@@ -6,8 +6,17 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Map, Loader, Route, LocateFixed } from 'lucide-react';
+import { Autocomplete } from '@react-google-maps/api';
 
-export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, loading, onUseMyLocation }) {
+export default function RoutePlanner({ 
+    onPlanRoute, 
+    originRef, 
+    destinationRef, 
+    loading, 
+    onUseMyLocation,
+    onOriginLoad,
+    onDestinationLoad 
+}) {
   
   return (
     <Card>
@@ -24,12 +33,15 @@ export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, l
         <div className="space-y-2">
           <Label htmlFor="origin">Origin</Label>
           <div className="flex gap-2">
-            <Input 
-                id="origin" 
-                placeholder="Current Location" 
-                ref={originRef}
-                disabled={loading}
-            />
+            <Autocomplete onLoad={onOriginLoad}>
+                <Input 
+                    id="origin" 
+                    placeholder="Current Location" 
+                    ref={originRef}
+                    disabled={loading}
+                    className="w-[285px]"
+                />
+            </Autocomplete>
             <Button variant="outline" size="icon" onClick={onUseMyLocation} disabled={loading} aria-label="Use my location">
                 <LocateFixed />
             </Button>
@@ -37,12 +49,14 @@ export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, l
         </div>
         <div className="space-y-2">
           <Label htmlFor="destination">Destination</Label>
-          <Input 
-            id="destination" 
-            placeholder="e.g., Agra" 
-            ref={destinationRef}
-            disabled={loading}
-          />
+          <Autocomplete onLoad={onDestinationLoad}>
+            <Input 
+                id="destination" 
+                placeholder="e.g., Agra" 
+                ref={destinationRef}
+                disabled={loading}
+            />
+          </Autocomplete>
         </div>
       </CardContent>
       <CardFooter>
@@ -54,3 +68,5 @@ export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, l
     </Card>
   );
 }
+
+    

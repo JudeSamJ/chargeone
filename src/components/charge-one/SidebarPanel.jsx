@@ -29,10 +29,11 @@ export default function SidebarPanel({
     onUseMyLocation,
     userBookings,
     onCancelBooking,
-    onSelectStation,
     isRechargeOpen,
     setIsRechargeOpen,
     handleRecharge,
+    setOriginAutocomplete,
+    setDestinationAutocomplete,
 }) {
   const getPanelContent = () => {
     switch (activePanel) {
@@ -60,6 +61,8 @@ export default function SidebarPanel({
               destinationRef={destinationRef}
               loading={loadingRoute}
               onUseMyLocation={onUseMyLocation}
+              onOriginLoad={setOriginAutocomplete}
+              onDestinationLoad={setDestinationAutocomplete}
             />
           </>
         );
@@ -115,3 +118,5 @@ export default function SidebarPanel({
     </>
   );
 }
+
+    
