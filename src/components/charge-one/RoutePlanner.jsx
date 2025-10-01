@@ -16,6 +16,8 @@ export default function RoutePlanner({
     onUseMyLocation,
     setOriginAutocomplete,
     setDestinationAutocomplete, 
+    onOriginPlaceChanged,
+    onDestinationPlaceChanged,
 }) {
   
   return (
@@ -33,7 +35,7 @@ export default function RoutePlanner({
         <div className="space-y-2">
           <Label htmlFor="origin">Origin</Label>
           <div className="flex gap-2">
-            <Autocomplete onLoad={setOriginAutocomplete}>
+            <Autocomplete onLoad={setOriginAutocomplete} onPlaceChanged={onOriginPlaceChanged}>
                 <Input 
                     id="origin" 
                     placeholder="Current Location" 
@@ -49,7 +51,7 @@ export default function RoutePlanner({
         </div>
         <div className="space-y-2">
           <Label htmlFor="destination">Destination</Label>
-          <Autocomplete onLoad={setDestinationAutocomplete}>
+          <Autocomplete onLoad={setDestinationAutocomplete} onPlaceChanged={onDestinationPlaceChanged}>
             <Input 
                 id="destination" 
                 placeholder="e.g., Agra" 
@@ -68,6 +70,3 @@ export default function RoutePlanner({
     </Card>
   );
 }
-
-    
-    

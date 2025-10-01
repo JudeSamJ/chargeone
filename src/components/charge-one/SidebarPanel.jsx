@@ -34,6 +34,8 @@ export default function SidebarPanel({
     handleRecharge,
     setOriginAutocomplete,
     setDestinationAutocomplete,
+    onOriginPlaceChanged,
+    onDestinationPlaceChanged,
 }) {
   const getPanelContent = () => {
     switch (activePanel) {
@@ -63,6 +65,8 @@ export default function SidebarPanel({
               onUseMyLocation={onUseMyLocation}
               setOriginAutocomplete={setOriginAutocomplete}
               setDestinationAutocomplete={setDestinationAutocomplete}
+              onOriginPlaceChanged={onOriginPlaceChanged}
+              onDestinationPlaceChanged={onDestinationPlaceChanged}
             />
           </>
         );
@@ -118,6 +122,3 @@ export default function SidebarPanel({
     </>
   );
 }
-
-    
-    

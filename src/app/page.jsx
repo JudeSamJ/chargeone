@@ -255,9 +255,23 @@ function HomePageContent() {
     if(route) clearRoute();
     if(selectedStation) setSelectedStation(null);
   };
+  
+  const onOriginPlaceChanged = () => {
+    if (originAutocomplete !== null && originRef.current) {
+        const place = originAutocomplete.getPlace();
+        originRef.current.value = place.formatted_address || place.name || '';
+    }
+  };
+
+  const onDestinationPlaceChanged = () => {
+      if (destinationAutocomplete !== null && destinationRef.current) {
+          const place = destinationAutocomplete.getPlace();
+          destinationRef.current.value = place.formatted_address || place.name || '';
+      }
+  };
 
 
-  if (loading || (!user && !isGuest) || !userVehicle || loadError) {
+  if (loading || (!user && !isGuest) || !userVehicle || !isLoaded || loadError) {
     return (
         <div className="relative h-screen w-screen">
             <Skeleton className="h-full w-full" />
@@ -328,6 +342,8 @@ function HomePageContent() {
             handleRecharge={handleRecharge}
             setOriginAutocomplete={setOriginAutocomplete}
             setDestinationAutocomplete={setDestinationAutocomplete}
+            onOriginPlaceChanged={onOriginPlaceChanged}
+            onDestinationPlaceChanged={onDestinationPlaceChanged}
         /> }
         
         <div className="h-full w-full">
@@ -379,5 +395,3 @@ export default function Home() {
     </Suspense>
   )
 }
-
-    
