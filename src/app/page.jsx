@@ -326,9 +326,7 @@ function HomePageContent() {
             isRechargeOpen={isRechargeOpen}
             setIsRechargeOpen={setIsRechargeOpen}
             handleRecharge={handleRecharge}
-            originAutocomplete={originAutocomplete}
             setOriginAutocomplete={setOriginAutocomplete}
-            destinationAutocomplete={destinationAutocomplete}
             setDestinationAutocomplete={setDestinationAutocomplete}
         /> }
         
@@ -381,3 +379,5 @@ export default function Home() {
     </Suspense>
   )
 }
+
+    

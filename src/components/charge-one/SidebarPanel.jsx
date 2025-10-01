@@ -61,8 +61,8 @@ export default function SidebarPanel({
               destinationRef={destinationRef}
               loading={loadingRoute}
               onUseMyLocation={onUseMyLocation}
-              onOriginLoad={setOriginAutocomplete}
-              onDestinationLoad={setDestinationAutocomplete}
+              setOriginAutocomplete={setOriginAutocomplete}
+              setDestinationAutocomplete={setDestinationAutocomplete}
             />
           </>
         );
@@ -119,4 +119,5 @@ export default function SidebarPanel({
   );
 }
 
+    
     
