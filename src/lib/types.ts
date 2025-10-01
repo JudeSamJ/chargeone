@@ -1,12 +1,14 @@
 
 import { z } from 'genkit';
 
+// Add a consumption property to the vehicle type.
 export interface Vehicle {
   make: string;
   model: string;
   batteryCapacity: number; // in kWh
   currentCharge: number; // in %
   connectorType: 'CCS' | 'CHAdeMO' | 'Type 2';
+  consumption: number; // in km per kWh
 }
 
 export const StationSchema = z.object({
@@ -69,4 +71,5 @@ export const PlanRouteOutputSchema = z.object({
 
 export type PlanRouteInput = z.infer<typeof PlanRouteInputSchema>;
 export type PlanRouteOutput = z.infer<typeof PlanRouteOutputSchema>;
+
 

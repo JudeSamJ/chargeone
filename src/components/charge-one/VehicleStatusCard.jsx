@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Car, BatteryFull, BatteryMedium, BatteryLow, BatteryWarning, Plug } from 'lucide-react';
+import { Car, BatteryFull, BatteryMedium, BatteryLow, BatteryWarning, Plug, Gauge } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '../ui/separator';
 
 export default function VehicleStatusCard({ vehicle }) {
-  const { make, model, batteryCapacity, currentCharge, connectorType } = vehicle;
+  const { make, model, batteryCapacity, currentCharge, connectorType, consumption } = vehicle;
 
   const getBatteryInfo = (charge) => {
     if (charge > 75) {
@@ -58,6 +58,13 @@ export default function VehicleStatusCard({ vehicle }) {
                 <div>
                     <p className="text-muted-foreground">Battery</p>
                     <p className="font-semibold">{batteryCapacity} kWh</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-2">
+                <Gauge className="h-4 w-4 text-muted-foreground" />
+                <div>
+                    <p className="text-muted-foreground">Consumption</p>
+                    <p className="font-semibold">{consumption} km/kWh</p>
                 </div>
             </div>
          </div>

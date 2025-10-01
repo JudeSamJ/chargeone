@@ -28,8 +28,8 @@ const planRouteFlow = ai.defineFlow(
     const route = directionsResult.routes[0];
     const leg = route.legs[0];
     
-    // Simple range calculation: 1 kWh gives ~5 km range.
-    const vehicleMaxRangeKm = vehicle.batteryCapacity * 5; 
+    // Use the vehicle's specific consumption rate
+    const vehicleMaxRangeKm = vehicle.batteryCapacity * vehicle.consumption;
     const safetyBufferKm = 50; // Leave a 50km buffer
     let currentChargeKm = vehicleMaxRangeKm * (vehicle.currentCharge / 100);
     
@@ -59,8 +59,10 @@ const planRouteFlow = ai.defineFlow(
                 radius: 50000, // 50km search radius
             });
 
-            // Find the best available station nearby
-            const bestStation = nearbyStations.find(s => s.status === 'available');
+            // Find the best available station nearby (available and highest power)
+            const bestStation = nearbyStations
+                .filter(s => s.status === 'available')
+                .sort((a, b) => b.power - a.power)[0]; // Get the one with the highest power
 
             if (bestStation) {
                 // Add this station to our list of required stops if it's not already there
@@ -69,14 +71,18 @@ const planRouteFlow = ai.defineFlow(
                 }
 
                 // Estimate charging time.
-                // Assuming we charge from ~10% to 80% (a 70% charge)
-                const chargeNeededKwh = vehicle.batteryCapacity * 0.7;
-                // Time (h) = Energy (kWh) / Power (kW)
-                const chargingTimeHours = chargeNeededKwh / bestStation.power;
-                totalChargingTimeSeconds += chargingTimeHours * 3600;
+                // Assuming we charge from current state to 80%
+                const chargeNeededTo80Percent = (vehicle.batteryCapacity * 0.8) - ((currentChargeKm - stepDistanceKm) / vehicle.consumption);
+                
+                if (chargeNeededTo80Percent > 0) {
+                    // Time (h) = Energy (kWh) / Power (kW)
+                    const chargingTimeHours = chargeNeededTo80Percent / bestStation.power;
+                    totalChargingTimeSeconds += chargingTimeHours * 3600;
 
-                // After charging, our range is reset to full.
-                currentChargeKm = vehicleMaxRangeKm;
+                    // After charging, our range is reset to 80% of max.
+                    currentChargeKm = vehicleMaxRangeKm * 0.8;
+                }
+
             } else {
                 // Could not find an available station. For now, we'll just continue,
                 // but a real app might alert the user or try a wider search.
@@ -88,8 +94,6 @@ const planRouteFlow = ai.defineFlow(
         currentChargeKm -= stepDistanceKm;
     }
 
-    // The stations are already pre-sorted by the findStations flow, 
-    // but we can re-sort here if needed, or just take the ones we found.
     const requiredChargingStations = stationsOnRoute;
 
     const totalDriveDurationSeconds = leg.duration?.value || 0;
