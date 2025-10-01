@@ -1,12 +1,13 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Map, Loader, Route } from 'lucide-react';
+import { Map, Loader, Route, LocateFixed } from 'lucide-react';
 
-export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, loading }) {
+export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, loading, onUseMyLocation }) {
   
   return (
     <Card>
@@ -22,12 +23,17 @@ export default function RoutePlanner({ onPlanRoute, originRef, destinationRef, l
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="origin">Origin</Label>
-          <Input 
-              id="origin" 
-              placeholder="e.g., Delhi" 
-              ref={originRef}
-              disabled={loading}
-          />
+          <div className="flex gap-2">
+            <Input 
+                id="origin" 
+                placeholder="Current Location" 
+                ref={originRef}
+                disabled={loading}
+            />
+            <Button variant="outline" size="icon" onClick={onUseMyLocation} disabled={loading} aria-label="Use my location">
+                <LocateFixed />
+            </Button>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="destination">Destination</Label>

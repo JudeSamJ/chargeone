@@ -26,6 +26,7 @@ export default function SidebarPanel({
     originRef,
     destinationRef,
     loadingRoute,
+    onUseMyLocation,
     userBookings,
     onCancelBooking,
     onSelectStation,
@@ -58,6 +59,7 @@ export default function SidebarPanel({
               originRef={originRef}
               destinationRef={destinationRef}
               loading={loadingRoute}
+              onUseMyLocation={onUseMyLocation}
             />
           </>
         );

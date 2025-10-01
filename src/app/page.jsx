@@ -86,11 +86,19 @@ function HomePageContent() {
     }
   }, [user, fetchUserBookings]);
 
-  useEffect(() => {
-    if (currentLocation && originRef.current && !originRef.current.value) {
-      originRef.current.value = `${currentLocation.lat}, ${currentLocation.lng}`;
+  const setOriginToCurrentLocation = useCallback(() => {
+    if (currentLocation && originRef.current) {
+        if (currentLocation.lat && currentLocation.lng) {
+            originRef.current.value = `${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}`;
+        }
     }
   }, [currentLocation]);
+
+  useEffect(() => {
+    if (activePanel === 'planner') {
+      setOriginToCurrentLocation();
+    }
+  }, [activePanel, setOriginToCurrentLocation]);
   
   const handleStationSelect = (station) => {
     setSelectedStation(station);
@@ -297,6 +305,7 @@ function HomePageContent() {
             originRef={originRef}
             destinationRef={destinationRef}
             loadingRoute={loadingRoute}
+            onUseMyLocation={setOriginToCurrentLocation}
             userBookings={userBookings}
             onCancelBooking={handleCancelBooking}
             onSelectStation={handleStationSelect}
