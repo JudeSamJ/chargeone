@@ -20,8 +20,16 @@ import SidebarPanel from '@/components/charge-one/SidebarPanel';
 import ChargingSession from '@/components/charge-one/ChargingSession';
 import BookingDialog from '@/components/charge-one/BookingDialog';
 import FilterDialog from '@/components/charge-one/FilterDialog';
+import { useJsApiLoader } from '@react-google-maps/api';
+
+const libraries = ['places', 'geometry'];
 
 function HomePageContent() {
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: "AIzaSyBMltP754BsiINUjJ90C0HE5YE0As2cTcc",
+    libraries,
+  });
+  
   const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -97,10 +105,10 @@ function HomePageContent() {
   }, [currentLocation]);
 
   useEffect(() => {
-    if (activePanel === 'planner') {
+    if (activePanel === 'planner' && isLoaded) {
       setOriginToCurrentLocation();
     }
-  }, [activePanel, setOriginToCurrentLocation]);
+  }, [activePanel, setOriginToCurrentLocation, isLoaded]);
   
   const handleStationSelect = (station) => {
     setSelectedStation(station);
@@ -249,7 +257,7 @@ function HomePageContent() {
   };
 
 
-  if (loading || (!user && !isGuest) || !userVehicle) {
+  if (loading || (!user && !isGuest) || !userVehicle || loadError) {
     return (
         <div className="relative h-screen w-screen">
             <Skeleton className="h-full w-full" />
@@ -296,11 +304,11 @@ function HomePageContent() {
       <div className="relative h-screen w-screen overflow-hidden">
         <SidebarNav activePanel={activePanel} onPanelToggle={handlePanelToggle} isGuest={isGuest} />
         
-        <div className="absolute top-24 left-20 z-10 w-[380px]">
+        {isLoaded && <div className="absolute top-24 left-20 z-10 w-[380px]">
           {mainContent}
-        </div>
+        </div>}
         
-        <SidebarPanel
+        {isLoaded && <SidebarPanel
             activePanel={activePanel}
             onClose={() => setActivePanel(null)}
             isGuest={isGuest}
@@ -322,18 +330,19 @@ function HomePageContent() {
             setOriginAutocomplete={setOriginAutocomplete}
             destinationAutocomplete={destinationAutocomplete}
             setDestinationAutocomplete={setDestinationAutocomplete}
-        />
+        /> }
         
         <div className="h-full w-full">
-            <Header 
+            {isLoaded && <Header 
               mapTypeId={mapTypeId}
               onMapTypeIdChange={setMapTypeId}
               showTraffic={showTraffic}
               onShowTrafficChange={setShowTraffic}
               onRecenter={recenterMap}
               onFilterClick={() => setIsFilterOpen(true)}
-            />
+            />}
             <MapView 
+                isLoaded={isLoaded}
                 onStationsFound={handleStationsFound} 
                 stations={stations}
                 onStationClick={handleStationSelect}
@@ -372,5 +381,3 @@ export default function Home() {
     </Suspense>
   )
 }
-
-    

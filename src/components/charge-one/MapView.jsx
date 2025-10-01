@@ -1,7 +1,7 @@
 
 "use client";
 
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, DirectionsRenderer, TrafficLayer } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, InfoWindowF, DirectionsRenderer, TrafficLayer } from '@react-google-maps/api';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { findStations } from '@/ai/flows/findStations';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,7 @@ const defaultCenter = {
 };
 
 export default function MapView({ 
+    isLoaded,
     onStationsFound, 
     stations, 
     onStationClick, 
@@ -37,10 +38,6 @@ export default function MapView({
     setRecenterCallback,
     activeFilters,
 }) {
-    const { isLoaded, loadError } = useJsApiLoader({
-        googleMapsApiKey: "AIzaSyBMltP754BsiINUjJ90C0HE5YE0As2cTcc",
-        libraries: ['places', 'geometry'], 
-    });
     
     const [activeMarker, setActiveMarker] = useState(null);
     const mapRef = useRef(null);
@@ -188,8 +185,7 @@ export default function MapView({
         };
     };
 
-    if (loadError) return <div className="flex items-center justify-center h-full w-full bg-muted rounded-lg"><p>Error loading map</p></div>;
-    if (!isLoaded || !locationReady) return <div className="flex items-center justify-center h-full w-full bg-muted rounded-lg"><p>Getting your location...</p></div>;
+    if (!isLoaded || !locationReady) return <div className="flex items-center justify-center h-full w-full bg-muted rounded-lg"><p>Loading Map & Location...</p></div>;
     
     const activeStation = activeMarker && 'name' in activeMarker.content ? activeMarker.content : null;
     const activeTitle = activeMarker && 'title' in activeMarker.content ? activeMarker.content.title : null;
@@ -305,5 +301,3 @@ export default function MapView({
         </GoogleMap>
     );
 }
-
-    
