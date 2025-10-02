@@ -1,18 +1,24 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut, 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
   Auth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPhoneNumber as firebaseSignInWithPhoneNumber,
   RecaptchaVerifier,
   ConfirmationResult,
-  OAuthProvider
+  OAuthProvider,
 } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
+
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
+}
 
 // The configuration is hardcoded here to bypass environment variable loading issues.
 // For production, it is strongly recommended to use environment variables.
@@ -40,16 +46,15 @@ const db: Firestore = getFirestore(app);
 
 // Social Providers
 const googleProvider = new GoogleAuthProvider();
-const appleProvider = new OAuthProvider('apple.com');
-
+const appleProvider = new OAuthProvider("apple.com");
 
 export const signInWithGoogle = () => {
   return signInWithPopup(auth, googleProvider);
 };
 
 export const signInWithApple = () => {
-    return signInWithPopup(auth, appleProvider);
-}
+  return signInWithPopup(auth, appleProvider);
+};
 
 export const signOutWithGoogle = () => {
   return signOut(auth);
@@ -57,35 +62,43 @@ export const signOutWithGoogle = () => {
 
 // Email/Password Auth
 export const signUpWithEmail = (email, password) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+  return createUserWithEmailAndPassword(auth, email, password);
 };
 
 export const signInWithEmail = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  return signInWithEmailAndPassword(auth, email, password);
 };
 
 // Phone Auth
 const setupRecaptcha = () => {
-  if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'invisible',
-      'callback': (response) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
+  if (typeof window !== "undefined" && !window.recaptchaVerifier) {
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      {
+        size: "invisible",
+        callback: (response) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        },
       }
-    });
+    );
   }
 };
 
-export const signInWithPhoneNumber = (phoneNumber: string): Promise<ConfirmationResult> => {
+export const signInWithPhoneNumber = (
+  phoneNumber: string
+): Promise<ConfirmationResult> => {
   setupRecaptcha();
   const appVerifier = window.recaptchaVerifier;
   const formattedPhoneNumber = `+91${phoneNumber}`;
   return firebaseSignInWithPhoneNumber(auth, formattedPhoneNumber, appVerifier);
 };
 
-export const verifyPhoneNumberOtp = (confirmationResult: ConfirmationResult, otp: string) => {
+export const verifyPhoneNumberOtp = (
+  confirmationResult: ConfirmationResult,
+  otp: string
+) => {
   return confirmationResult.confirm(otp);
 };
-
 
 export { auth, app, db };

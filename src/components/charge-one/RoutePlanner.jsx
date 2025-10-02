@@ -1,41 +1,30 @@
-
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Map, Route, LocateFixed, Loader } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Map, Loader, Route, LocateFixed } from "lucide-react";
+import { Autocomplete } from "@react-google-maps/api";
 
-export default function RoutePlanner({ onPlanRoute, isPlanning, currentLocation }) {
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
-
-  useEffect(() => {
-    // Automatically set origin when current location is first determined,
-    // but only if the user hasn't already typed something in.
-    if (currentLocation && origin.trim() === '') {
-      setOrigin(`${currentLocation.lat}, ${currentLocation.lng}`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLocation]);
-
-
-  const handlePlanRoute = () => {
-    if (origin && destination) {
-      onPlanRoute(origin, destination);
-    }
-  };
-
-  const handleUseCurrentLocation = () => {
-    if (currentLocation) {
-        setOrigin(`${currentLocation.lat}, ${currentLocation.lng}`);
-    } else {
-        alert("Could not retrieve your location. Please wait a moment or enter it manually.");
-    }
-  }
-
+export default function RoutePlanner({
+  onPlanRoute,
+  originRef,
+  destinationRef,
+  loading,
+  onUseMyLocation,
+  setOriginAutocomplete,
+  setDestinationAutocomplete,
+  onOriginPlaceChanged,
+  onDestinationPlaceChanged,
+}) {
   return (
     <Card>
       <CardHeader>
@@ -50,32 +39,53 @@ export default function RoutePlanner({ onPlanRoute, isPlanning, currentLocation 
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="origin">Origin</Label>
-          <div className="flex items-center gap-2">
-            <Input 
-                id="origin" 
-                placeholder="e.g., Delhi or lat,lng" 
-                value={origin}
-                onChange={(e) => setOrigin(e.target.value)}
-            />
-            <Button variant="outline" size="icon" onClick={handleUseCurrentLocation} aria-label="Use current location" disabled={!currentLocation}>
-                <LocateFixed className="h-4 w-4" />
+          <div className="flex gap-2">
+            <Autocomplete
+              onLoad={setOriginAutocomplete}
+              onPlaceChanged={onOriginPlaceChanged}
+            >
+              <Input
+                id="origin"
+                placeholder="Current Location"
+                ref={originRef}
+                disabled={loading}
+                className="w-[285px]"
+              />
+            </Autocomplete>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onUseMyLocation}
+              disabled={loading}
+              aria-label="Use my location"
+            >
+              <LocateFixed />
             </Button>
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="destination">Destination</Label>
-          <Input 
-            id="destination" 
-            placeholder="e.g., Agra" 
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-          />
+          <Autocomplete
+            onLoad={setDestinationAutocomplete}
+            onPlaceChanged={onDestinationPlaceChanged}
+          >
+            <Input
+              id="destination"
+              placeholder="e.g., Agra"
+              ref={destinationRef}
+              disabled={loading}
+            />
+          </Autocomplete>
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={handlePlanRoute} disabled={!origin || !destination || isPlanning}>
-          {isPlanning ? <Loader className="mr-2 animate-spin" /> : <Map className="mr-2" />}
-          {isPlanning ? 'Planning...' : 'Plan My Route'}
+        <Button className="w-full" onClick={onPlanRoute} disabled={loading}>
+          {loading ? (
+            <Loader className="mr-2 animate-spin" />
+          ) : (
+            <Map className="mr-2" />
+          )}
+          {loading ? "Calculating..." : "Calculate Route"}
         </Button>
       </CardFooter>
     </Card>

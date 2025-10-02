@@ -1,5 +1,6 @@
 # This file configures the integration with various EV charging network providers.
 # It allows the application to adapt to different API structures without changing the core code.
+
 providers:
   ChargePoint:
     baseUrl: "https://api.chargepoint.com/v1" # This is a fictional API endpoint for demonstration

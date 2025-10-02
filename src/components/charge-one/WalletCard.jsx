@@ -1,6 +1,13 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Wallet, PlusCircle } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Wallet, PlusCircle } from "lucide-react";
 
 export default function WalletCard({ balance, onRecharge }) {
   return (
@@ -13,7 +20,9 @@ export default function WalletCard({ balance, onRecharge }) {
         <div className="text-3xl font-bold font-headline">
           ₹{balance.toFixed(2)}
         </div>
-        <p className="text-xs text-muted-foreground">Available funds for charging sessions</p>
+        <p className="text-xs text-muted-foreground">
+          Available funds for charging sessions
+        </p>
       </CardContent>
       <CardFooter>
         <Button className="w-full" onClick={onRecharge}>

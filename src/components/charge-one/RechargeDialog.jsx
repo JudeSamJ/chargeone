@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,38 +8,44 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
-export default function RechargeDialog({ isOpen, onOpenChange, onRecharge, razorpayKeyId }) {
-  const [amount, setAmount] = useState('');
+export default function RechargeDialog({
+  isOpen,
+  onOpenChange,
+  onRecharge,
+  razorpayKeyId,
+}) {
+  const [amount, setAmount] = useState("");
   const { toast } = useToast();
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
 
   useEffect(() => {
-    const scriptId = 'razorpay-checkout-js';
+    const scriptId = "razorpay-checkout-js";
     if (document.getElementById(scriptId) || window.Razorpay) {
       setIsRazorpayLoaded(true);
       return;
     }
 
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.id = scriptId;
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     script.onload = () => {
       setIsRazorpayLoaded(true);
     };
     script.onerror = () => {
-      console.error('Razorpay script failed to load.');
+      console.error("Razorpay script failed to load.");
       setIsRazorpayLoaded(false);
       toast({
-        variant: 'destructive',
-        title: 'Payment Error',
-        description: 'Could not load the payment gateway. Please check your connection and try again.',
+        variant: "destructive",
+        title: "Payment Error",
+        description:
+          "Could not load the payment gateway. Please check your connection and try again.",
       });
     };
 
@@ -58,18 +63,19 @@ export default function RechargeDialog({ isOpen, onOpenChange, onRecharge, razor
     const rechargeAmount = parseFloat(amount);
     if (isNaN(rechargeAmount) || rechargeAmount <= 0) {
       toast({
-        variant: 'destructive',
-        title: 'Invalid Amount',
-        description: 'Please enter a valid amount to recharge.',
+        variant: "destructive",
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to recharge.",
       });
       return;
     }
 
     if (!isRazorpayLoaded || !window.Razorpay) {
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Payment gateway is not ready yet. Please try again in a moment.',
+        variant: "destructive",
+        title: "Error",
+        description:
+          "Payment gateway is not ready yet. Please try again in a moment.",
       });
       return;
     }
@@ -77,46 +83,47 @@ export default function RechargeDialog({ isOpen, onOpenChange, onRecharge, razor
     const options = {
       key: razorpayKeyId,
       amount: rechargeAmount * 100,
-      currency: 'INR',
-      name: 'ChargeOne Wallet',
-      description: 'Recharge your wallet',
-      image: 'https://placehold.co/100x100.png',
+      currency: "INR",
+      name: "ChargeOne Wallet",
+      description: "Recharge your wallet",
+      image: "https://placehold.co/100x100.png",
       handler: () => {
         onRecharge(rechargeAmount);
-        setAmount('');
+        setAmount("");
         onOpenChange(false);
       },
       prefill: {
-        contact: '9000000000',
-        email: 'guest@chargeone.com',
-        name: 'Guest User',
+        contact: "9000000000",
+        email: "guest@chargeone.com",
+        name: "Guest User",
       },
       notes: {
-        address: 'ChargeOne Corporate Office',
+        address: "ChargeOne Corporate Office",
       },
       theme: {
-        color: '#1976D2',
+        color: "#1976D2",
       },
     };
 
     try {
       const rzp1 = new window.Razorpay(options);
-      rzp1.on('payment.failed', (response) => {
-        console.error('Razorpay Payment Failed:', response.error);
+      rzp1.on("payment.failed", (response) => {
+        console.error("Razorpay Payment Failed:", response.error);
         toast({
-          variant: 'destructive',
-          title: 'Payment Failed',
-          description: response.error.description || 'An unknown error occurred.',
+          variant: "destructive",
+          title: "Payment Failed",
+          description:
+            response.error.description || "An unknown error occurred.",
         });
         onOpenChange(false);
       });
       rzp1.open();
     } catch (error) {
-      console.error('Error initializing Razorpay', error);
+      console.error("Error initializing Razorpay", error);
       toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not initialize payment flow. Please try again.',
+        variant: "destructive",
+        title: "Error",
+        description: "Could not initialize payment flow. Please try again.",
       });
     }
   };
@@ -128,12 +135,18 @@ export default function RechargeDialog({ isOpen, onOpenChange, onRecharge, razor
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Recharge Wallet</DialogTitle>
-          <DialogDescription>Add funds to your wallet using Razorpay.</DialogDescription>
+          <DialogDescription>
+            Add funds to your wallet using Razorpay.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-3 gap-2">
             {quickAmounts.map((qAmount) => (
-              <Button key={qAmount} variant="outline" onClick={() => setAmount(qAmount.toString())}>
+              <Button
+                key={qAmount}
+                variant="outline"
+                onClick={() => setAmount(qAmount.toString())}
+              >
                 ₹{qAmount}
               </Button>
             ))}
@@ -165,7 +178,12 @@ export default function RechargeDialog({ isOpen, onOpenChange, onRecharge, razor
             type="button"
             onClick={handleRechargeClick}
             className="w-full"
-            disabled={!isRazorpayLoaded || !razorpayKeyId || !amount || parseFloat(amount) <= 0}
+            disabled={
+              !isRazorpayLoaded ||
+              !razorpayKeyId ||
+              !amount ||
+              parseFloat(amount) <= 0
+            }
           >
             Recharge with Razorpay
           </Button>

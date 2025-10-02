@@ -8,24 +8,47 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { signUpWithEmail, signInWithPhoneNumber, verifyPhoneNumberOtp } from "@/lib/firebase";
+import {
+  signUpWithEmail,
+  signInWithPhoneNumber,
+  verifyPhoneNumberOtp,
+} from "@/lib/firebase";
 import Image from "next/image";
 
 const emailSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters." }),
 });
 
 const phoneSchema = z.object({
-  phone: z.string()
+  phone: z
+    .string()
     .length(10, { message: "Phone number must be exactly 10 digits." })
-    .regex(/^[6-9]\d{9}$/, { message: "Please enter a valid Indian mobile number." }),
+    .regex(/^[6-9]\d{9}$/, {
+      message: "Please enter a valid Indian mobile number.",
+    }),
 });
 
 export default function SignupPage() {
@@ -54,12 +77,17 @@ export default function SignupPage() {
       await signUpWithEmail(data.email, data.password);
       toast({
         title: "Account Created",
-        description: "Your account has been successfully created. Please log in.",
+        description:
+          "Your account has been successfully created. Please log in.",
       });
       router.push("/login");
     } catch (error) {
       console.error("Email sign up failed", error);
-      toast({ variant: "destructive", title: "Sign Up Failed", description: error.message });
+      toast({
+        variant: "destructive",
+        title: "Sign Up Failed",
+        description: error.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -71,10 +99,17 @@ export default function SignupPage() {
       const result = await signInWithPhoneNumber(data.phone);
       setConfirmationResult(result);
       setOtpSent(true);
-      toast({ title: "OTP Sent", description: "An OTP has been sent to your phone." });
+      toast({
+        title: "OTP Sent",
+        description: "An OTP has been sent to your phone.",
+      });
     } catch (error) {
       console.error("Failed to send OTP", error);
-      toast({ variant: "destructive", title: "Failed to send OTP", description: error.message });
+      toast({
+        variant: "destructive",
+        title: "Failed to send OTP",
+        description: error.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -86,11 +121,18 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await verifyPhoneNumberOtp(confirmationResult, otp);
-      toast({ title: "Success!", description: "Your phone number has been verified." });
+      toast({
+        title: "Success!",
+        description: "Your phone number has been verified.",
+      });
       router.push("/vehicle-details");
     } catch (error) {
       console.error("OTP verification failed", error);
-      toast({ variant: "destructive", title: "Invalid OTP", description: "The OTP you entered is incorrect." });
+      toast({
+        variant: "destructive",
+        title: "Invalid OTP",
+        description: "The OTP you entered is incorrect.",
+      });
     } finally {
       setLoading(false);
     }
@@ -113,7 +155,10 @@ export default function SignupPage() {
             </TabsList>
             <TabsContent value="email">
               <Form {...emailForm}>
-                <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4 pt-4">
+                <form
+                  onSubmit={emailForm.handleSubmit(onEmailSubmit)}
+                  className="space-y-4 pt-4"
+                >
                   <FormField
                     control={emailForm.control}
                     name="email"
@@ -134,7 +179,11 @@ export default function SignupPage() {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -149,7 +198,10 @@ export default function SignupPage() {
             <TabsContent value="phone">
               {!otpSent ? (
                 <Form {...phoneForm}>
-                  <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4 pt-4">
+                  <form
+                    onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
+                    className="space-y-4 pt-4"
+                  >
                     <FormField
                       control={phoneForm.control}
                       name="phone"
@@ -158,10 +210,10 @@ export default function SignupPage() {
                           <FormLabel>Phone Number</FormLabel>
                           <div className="flex items-center gap-2">
                             <span className="flex h-10 items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
-                                +91
+                              +91
                             </span>
                             <FormControl>
-                                <Input placeholder="9876543210" {...field} />
+                              <Input placeholder="9876543210" {...field} />
                             </FormControl>
                           </div>
                           <FormMessage />
@@ -174,10 +226,20 @@ export default function SignupPage() {
                   </form>
                 </Form>
               ) : (
-                <form onSubmit={handleOtpVerification} className="space-y-4 pt-4">
+                <form
+                  onSubmit={handleOtpVerification}
+                  className="space-y-4 pt-4"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="otp">Enter OTP</Label>
-                    <Input id="otp" type="text" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value)} required />
+                    <Input
+                      id="otp"
+                      type="text"
+                      placeholder="123456"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      required
+                    />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Verifying..." : "Verify & Sign Up"}
@@ -188,7 +250,15 @@ export default function SignupPage() {
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
-           <p>Already have an account? <Link href="/login" className="font-semibold text-primary hover:underline">Log in</Link></p>
+          <p>
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-semibold text-primary hover:underline"
+            >
+              Log in
+            </Link>
+          </p>
         </CardFooter>
       </Card>
       <div id="recaptcha-container" className="fixed bottom-0 right-0" />
