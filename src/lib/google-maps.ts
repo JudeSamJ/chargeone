@@ -1,6 +1,6 @@
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE";
+const API_KEY = "AIzaSyBMltP754BsiINUjJ90C0HE5YE0As2cTcc";
 
-if (!API_KEY || API_KEY === "YOUR_GOOGLE_MAPS_API_KEY") {
+if (!API_KEY) {
   console.warn(
     "Using a placeholder Google Maps API Key. Please replace it in src/lib/google-maps.ts"
   );

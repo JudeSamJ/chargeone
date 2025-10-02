@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 
 import {
@@ -13,6 +14,18 @@ import { CalendarDays, X, MapPin } from "lucide-react";
 import { differenceInMinutes, format } from "date-fns";
 
 export default function MyBookings({ bookings, onCancelBooking }) {
+=======
+
+"use client";
+
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { CalendarDays, X, MapPin } from 'lucide-react';
+import { differenceInMinutes, format } from 'date-fns';
+
+export default function MyBookings({ bookings, onCancelBooking }) {
+
+>>>>>>> e985d78e47653e1979c9e24ec6850ea54ccc31ad
   const canCancel = (bookingTime) => {
     // No need to convert, it's already a Date object
     return differenceInMinutes(bookingTime, new Date()) >= 15;
@@ -41,6 +54,7 @@ export default function MyBookings({ bookings, onCancelBooking }) {
         <CardDescription>Your upcoming charging sessions.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+<<<<<<< HEAD
         {bookings.map((booking) => {
           return (
             <div
@@ -71,6 +85,31 @@ export default function MyBookings({ bookings, onCancelBooking }) {
             </div>
           );
         })}
+=======
+        {bookings.map(booking => {
+            return (
+              <div key={booking.id} className="p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-semibold truncate">{booking.stationName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(booking.bookingTime, "EEE, MMM d, yyyy 'at' h:mm a")}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                   <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => onCancelBooking(booking)} 
+                    disabled={!canCancel(booking.bookingTime)}
+                    title={canCancel(booking.bookingTime) ? "Cancel Booking" : "Cannot cancel within 15 mins of start time"}
+                  >
+                    <X className="mr-2 h-4 w-4" /> Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+        )}
+>>>>>>> e985d78e47653e1979c9e24ec6850ea54ccc31ad
       </CardContent>
     </Card>
   );

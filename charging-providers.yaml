@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> e985d78e47653e1979c9e24ec6850ea54ccc31ad
 # This file configures the integration with various EV charging network providers.
 # It allows the application to adapt to different API structures without changing the core code.
 

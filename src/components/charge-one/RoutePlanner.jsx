@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 
 import {
@@ -25,6 +26,30 @@ export default function RoutePlanner({
   onOriginPlaceChanged,
   onDestinationPlaceChanged,
 }) {
+=======
+
+"use client";
+
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Map, Loader, Route, LocateFixed } from 'lucide-react';
+import { Autocomplete } from '@react-google-maps/api';
+
+export default function RoutePlanner({ 
+    onPlanRoute, 
+    originRef, 
+    destinationRef, 
+    loading, 
+    onUseMyLocation,
+    setOriginAutocomplete,
+    setDestinationAutocomplete, 
+    onOriginPlaceChanged,
+    onDestinationPlaceChanged,
+}) {
+  
+>>>>>>> e985d78e47653e1979c9e24ec6850ea54ccc31ad
   return (
     <Card>
       <CardHeader>
@@ -40,6 +65,7 @@ export default function RoutePlanner({
         <div className="space-y-2">
           <Label htmlFor="origin">Origin</Label>
           <div className="flex gap-2">
+<<<<<<< HEAD
             <Autocomplete
               onLoad={setOriginAutocomplete}
               onPlaceChanged={onOriginPlaceChanged}
@@ -60,11 +86,25 @@ export default function RoutePlanner({
               aria-label="Use my location"
             >
               <LocateFixed />
+=======
+            <Autocomplete onLoad={setOriginAutocomplete} onPlaceChanged={onOriginPlaceChanged}>
+                <Input 
+                    id="origin" 
+                    placeholder="Current Location" 
+                    ref={originRef}
+                    disabled={loading}
+                    className="w-[285px]"
+                />
+            </Autocomplete>
+            <Button variant="outline" size="icon" onClick={onUseMyLocation} disabled={loading} aria-label="Use my location">
+                <LocateFixed />
+>>>>>>> e985d78e47653e1979c9e24ec6850ea54ccc31ad
             </Button>
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="destination">Destination</Label>
+<<<<<<< HEAD
           <Autocomplete
             onLoad={setDestinationAutocomplete}
             onPlaceChanged={onDestinationPlaceChanged}
@@ -74,18 +114,31 @@ export default function RoutePlanner({
               placeholder="e.g., Agra"
               ref={destinationRef}
               disabled={loading}
+=======
+          <Autocomplete onLoad={setDestinationAutocomplete} onPlaceChanged={onDestinationPlaceChanged}>
+            <Input 
+                id="destination" 
+                placeholder="e.g., Agra" 
+                ref={destinationRef}
+                disabled={loading}
+>>>>>>> e985d78e47653e1979c9e24ec6850ea54ccc31ad
             />
           </Autocomplete>
         </div>
       </CardContent>
       <CardFooter>
         <Button className="w-full" onClick={onPlanRoute} disabled={loading}>
+<<<<<<< HEAD
           {loading ? (
             <Loader className="mr-2 animate-spin" />
           ) : (
             <Map className="mr-2" />
           )}
           {loading ? "Calculating..." : "Calculate Route"}
+=======
+            {loading ? <Loader className="mr-2 animate-spin" /> : <Map className="mr-2" />}
+            {loading ? 'Calculating...' : 'Calculate Route'}
+>>>>>>> e985d78e47653e1979c9e24ec6850ea54ccc31ad
         </Button>
       </CardFooter>
     </Card>
